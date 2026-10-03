@@ -22,7 +22,7 @@ Open `index.html` in a browser. The data and the U.S. map are embedded in the fi
 |---|---|
 | `index.html` | The D3.js dashboard (served by GitHub Pages) |
 | `data/colleges_slim.csv` | Slimmed data: 6,243 operating institutions, 49 columns |
-| `data/prepare_data.py` | Script that builds the slim CSV from the full College Scorecard download |
+| `data/prepare_data_.py` | Script that builds the slim CSV from the full College Scorecard download |
 | `vega-lite/college_dashboard.vl.json` | Earlier Vega-Lite version (paste into https://vega.github.io/editor/ and set the data URL on line 5) |
 
 ## Data
