@@ -87,7 +87,7 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
     <div class="field"><span class="lab">State shading</span><div class="radios" id="mapStat"></div></div>
     <div class="field"><span class="lab">Top 10 shows</span><div class="radios" id="rank"></div></div>
     <div class="field"><label for="minTop">Top 10: min. undergrads <span class="out" id="minTopOut">500</span></label><input type="range" id="minTop" min="0" max="5000" step="100" value="500"></div>
-    <div class="field"><label class="lab" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="drag"> Drag a rectangle on the map to pick states</label><button id="clear" type="button">Clear selections</button></div>
+    <div class="field"><span class="lab">Selections (map &amp; scatterplot)</span><button id="clear" type="button">Clear all selections</button></div>
   </div>
 </section>
 
@@ -6396,7 +6396,7 @@ const fipsToAbbr=new Map(rows.filter(d=>d.ST_FIPS!=null).map(d=>[d.ST_FIPS,d.STA
 
 /* ---------- state ---------- */
 const S={outcome:"Earnings_10yr",cat:"Control",xvar:"Cost_of_attendance",ctrl:"All",deg:"Bachelor's",minSize:0,search:"",
-         rank:"Highest",mapStat:"Median school",minTop:500,sel:new Set(),brush:null,drag:false};
+         rank:"Highest",mapStat:"Median school",minTop:500,sel:new Set(),brush:null};
 const $=id=>document.getElementById(id);
 const tip=$("tip");
 function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;const w=tip.offsetWidth;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+tip.offsetHeight>innerHeight-8)y=e.clientY-tip.offsetHeight-14;tip.style.left=x+"px";tip.style.top=y+"px";}
@@ -6425,7 +6425,6 @@ radios("mapStat",["Median school","Mean school","Enrollment-weighted mean"],"map
 radios("rank",["Highest","Lowest"],"rank");
 $("minSize").addEventListener("input",e=>{S.minSize=+e.target.value;$("minSizeOut").textContent=d3.format(",")(S.minSize);later(render)});
 $("minTop").addEventListener("input",e=>{S.minTop=+e.target.value;$("minTopOut").textContent=d3.format(",")(S.minTop);later(render)});
-$("drag").addEventListener("change",e=>{S.drag=e.target.checked;render()});
 $("clear").addEventListener("click",()=>{S.sel.clear();S.brush=null;render()});
 
 /* autocomplete search */
@@ -6464,12 +6463,12 @@ function renderBox(data){
     stats.push({k,n:v.length,q1,m,q3,lo,hi,out:v.filter(x=>x<lo||x>hi)}); }
   if(!stats.length){host.innerHTML='<p class="empty">No group has at least 5 schools with the current filters.</p>';return}
   stats.sort((a,b)=>b.m-a.m);
-  const W=Math.max(host.clientWidth,240),rowH=24,lab=s=>`${s.k}  (n=${s.n})`;
-  const left=Math.min(Math.max(...stats.map(s=>lab(s).length))*6.7+12,W*.5);
+  const W=Math.max(host.clientWidth,240),rowH=Math.max(24,Math.min(80,Math.floor(330/stats.length))),lab=s=>`${s.k}  (n=${s.n})`;
+  const left=Math.min(Math.max(...stats.map(s=>lab(s).length))*6.7+22,W*.5);
   const m={l:left,r:14,t:26,b:6},H=m.t+m.b+stats.length*rowH;
   const all=stats.flatMap(s=>[s.lo,s.hi,...s.out]);
   const x=d3.scaleLinear(d3.extent(all),[m.l,W-m.r]).nice();
-  const y=d3.scaleBand(stats.map(s=>s.k),[m.t,H-m.b]).paddingInner(.3);
+  const y=d3.scaleBand(stats.map(s=>s.k),[m.t,H-m.b]).paddingInner(.22);
   const svg=d3.select(host).append("svg").attr("width",W).attr("height",H);
   svg.append("g").attr("class","axis").attr("transform",`translate(0,${m.t})`).call(d3.axisTop(x).ticks(Math.max(3,W/90)).tickFormat(tickFmt(o)));
   svg.append("g").attr("class","grid").attr("transform",`translate(0,${m.t})`).call(d3.axisTop(x).ticks(Math.max(3,W/90)).tickSize(-(H-m.t-m.b)).tickFormat(""));
@@ -6479,7 +6478,7 @@ function renderBox(data){
   g2.append("line").attr("x1",s=>x(s.lo)).attr("x2",s=>x(s.hi)).attr("y1",mid).attr("y2",mid).attr("stroke","var(--box-stroke)");
   g2.append("rect").attr("x",s=>x(s.q1)).attr("width",s=>Math.max(1,x(s.q3)-x(s.q1))).attr("y",0).attr("height",bh).attr("fill","var(--box-fill)").attr("stroke","var(--box-stroke)");
   g2.append("line").attr("x1",s=>x(s.m)).attr("x2",s=>x(s.m)).attr("y1",0).attr("y2",bh).attr("stroke","var(--median)").attr("stroke-width",2);
-  g2.selectAll("circle").data(s=>s.out).join("circle").attr("cx",v=>x(v)).attr("cy",mid).attr("r",1.7).attr("fill","var(--box-stroke)").attr("fill-opacity",.35);
+  g2.selectAll("circle").data(s=>s.out).join("circle").attr("cx",v=>x(v)).attr("cy",mid).attr("r",2.2).attr("fill","var(--box-stroke)").attr("fill-opacity",.4);
   g2.append("rect").attr("x",0).attr("width",W).attr("y",-2).attr("height",bh+4).attr("fill","transparent")
     .on("mousemove",(e,s)=>showTip(e,`<b>${esc(s.k)}</b><br>${s.n} schools<br>median ${fmtVal(o,s.m)}<br>middle 50%: ${fmtVal(o,s.q1)} to ${fmtVal(o,s.q3)}`)).on("mouseleave",hideTip);
 }
@@ -6500,11 +6499,11 @@ function renderScatter(base){
   g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(6).tickFormat(tickFmt(yk)));
   svg.append("text").attr("x",m.l+iw/2).attr("y",H-6).attr("text-anchor","middle").text(short(xk));
   svg.append("text").attr("transform",`translate(13,${m.t+ih/2}) rotate(-90)`).attr("text-anchor","middle").text(short(yk).length>58?short(yk).slice(0,56)+"…":short(yk));
-  const hasSel=S.sel.size>0;
-  g.append("g").attr("clip-path","url(#clipSc)").selectAll("circle").data(pts).join("circle")
+  const op=d=>stateOK(d)&&brushOK(d)?.6:.05;
+  const dotSel=g.append("g").attr("clip-path","url(#clipSc)").style("pointer-events","none").selectAll("circle").data(pts).join("circle")
     .attr("cx",d=>x(d[xk])).attr("cy",d=>y(d[yk])).attr("r",2.6).attr("fill",d=>COLORS[d.Control]||"#999")
-    .attr("fill-opacity",d=>!hasSel||S.sel.has(d.STABBR)?.55:.05)
-    .on("mousemove",(e,d)=>showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${esc(short(yk))}: ${fmtVal(yk,d[yk])}<br>${esc(short(xk))}: ${fmtVal(xk,d[xk])}`)).on("mouseleave",hideTip);
+    .attr("fill-opacity",op);
+  const qt=d3.quadtree().x(d=>x(d[xk])).y(d=>y(d[yk])).addAll(pts);
   // linear trend over all plotted schools
   let note="";
   if(pts.length>2){
@@ -6514,15 +6513,20 @@ function renderScatter(base){
       g.append("line").attr("clip-path","url(#clipSc)").attr("x1",x(x0)).attr("x2",x(x1)).attr("y1",y(a+b*x0)).attr("y2",y(a+b*x1)).attr("stroke","var(--median)").attr("stroke-width",1.6).attr("stroke-dasharray","5 4").style("pointer-events","none");
       note=` · dashed line = linear trend, r = ${d3.format(".2f")(r)}`;}
   }
-  $("sB").textContent=`${d3.format(",")(pts.length)} schools plotted. Drag a rectangle to select schools${note}.`;
+  $("sB").textContent=`${d3.format(",")(pts.length)} schools plotted. Drag on the chart to select a group of schools (click empty space to clear)${note}.`;
   // brush (kept in data coordinates so it survives re-scaling)
   const brush=d3.brush().extent([[0,0],[iw,ih]]).on("start brush end",e=>{
     if(!e.sourceEvent)return;
     if(!e.selection)S.brush=null;
     else{const [[a,b],[c,d]]=e.selection;S.brush={x0:x.invert(a),x1:x.invert(c),y0:y.invert(d),y1:y.invert(b)}}
-    later(renderLinked)});
+    dotSel.attr("fill-opacity",op);hideTip();later(renderLinked)});
   const bg=g.append("g").attr("class","brush").call(brush);
-  bg.select(".selection").attr("fill","var(--accent)").attr("fill-opacity",.15).attr("stroke","var(--accent)");
+  bg.select(".overlay").on("mousemove.tip",e=>{
+    if(e.buttons)return;
+    const [px,py]=d3.pointer(e,bg.node()),d=qt.find(px,py,8);
+    if(d)showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${esc(short(yk))}: ${fmtVal(yk,d[yk])}<br>${esc(short(xk))}: ${fmtVal(xk,d[xk])}`);else hideTip()})
+    .on("mouseleave.tip",hideTip);
+  bg.select(".selection").attr("fill","var(--accent)").attr("fill-opacity",.12).attr("stroke","var(--accent)").attr("stroke-width",1.5);
   if(S.brush){const b=S.brush,cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
     const a=cl(x(b.x0),0,iw),c=cl(x(b.x1),0,iw),t=cl(y(b.y1),0,ih),d=cl(y(b.y0),0,ih);
     if(c-a>1&&d-t>1)bg.call(brush.move,[[a,t],[c,d]]);}
@@ -6573,24 +6577,36 @@ function renderMap(base,filtered){
   // interaction
   const qt=d3.quadtree().x(o=>o.x).y(o=>o.y).addAll(dots);
   svg.on("mousemove",e=>{
-    if(S.drag){hideTip();return}
+    if(e.buttons){hideTip();return}
     const [px,py]=d3.pointer(e,svg.node()),hit=qt.find(px,py,6);
     if(hit){const d=hit.d;showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${esc(short(S.outcome))}: ${fmtVal(S.outcome,d[S.outcome])}`);return}
     const f=e.target.__data__; if(f&&f.id!=null&&e.target.tagName==="path"){const ab=fipsToAbbr.get(+f.id),o=vals.get(+f.id);
       showTip(e,`<b>${esc(NAMES[ab]||ab||"")}</b><br>State value: ${o?fmtVal(S.outcome,o.v):"n/a"}<br>Schools in state: ${o?o.n:0}`)} else hideTip()});
   svg.on("mouseleave",hideTip);
-  if(!S.drag){
-    paths.on("click",(e,f)=>{const ab=fipsToAbbr.get(+f.id);if(!ab)return;S.sel.has(ab)?S.sel.delete(ab):S.sel.add(ab);render()});
-    svg.on("dblclick",()=>{S.sel.clear();render()});
-  }else{
-    const cents=states.features.map(f=>({ab:fipsToAbbr.get(+f.id),c:path.centroid(f)})).filter(o=>o.ab&&!isNaN(o.c[0]));
-    const br=d3.brush().extent([[0,0],[W,H-34]]).on("end",e=>{
-      if(!e.sourceEvent||!e.selection)return;
-      const [[a,b],[c,d]]=e.selection,add=e.sourceEvent.shiftKey?new Set(S.sel):new Set();
-      cents.forEach(o=>{if(o.c[0]>=a&&o.c[0]<=c&&o.c[1]>=b&&o.c[1]<=d)add.add(o.ab)});
-      S.sel=add;render()});
-    svg.append("g").call(br).select(".selection").attr("fill","var(--accent)").attr("fill-opacity",.15).attr("stroke","var(--accent)");
-  }
+  svg.style("touch-action","pan-y").style("cursor","crosshair");
+  paths.style("cursor","pointer");
+  const cents=states.features.map(f=>({ab:fipsToAbbr.get(+f.id),c:path.centroid(f)})).filter(o=>o.ab&&!isNaN(o.c[0]));
+  svg.on("pointerdown",e0=>{
+    if(e0.button!==0)return;
+    const [x0,y0]=d3.pointer(e0,svg.node()),startTarget=e0.target;let dragged=false;
+    const box=svg.append("rect").attr("fill","var(--accent)").attr("fill-opacity",.15).attr("stroke","var(--accent)").attr("stroke-width",1.5).style("pointer-events","none").attr("width",0).attr("height",0);
+    const move=ev=>{const [x,y]=d3.pointer(ev,svg.node());
+      if(!dragged&&Math.hypot(x-x0,y-y0)>5){dragged=true;hideTip()}
+      if(dragged)box.attr("x",Math.min(x,x0)).attr("y",Math.min(y,y0)).attr("width",Math.abs(x-x0)).attr("height",Math.abs(y-y0))};
+    const up=ev=>{
+      window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);box.remove();
+      const [x1,y1]=d3.pointer(ev,svg.node());
+      if(dragged){
+        const xa=Math.min(x0,x1),xb=Math.max(x0,x1),ya=Math.min(y0,y1),yb=Math.max(y0,y1),add=ev.shiftKey?new Set(S.sel):new Set();
+        cents.forEach(o=>{if(o.c[0]>=xa&&o.c[0]<=xb&&o.c[1]>=ya&&o.c[1]<=yb)add.add(o.ab)});
+        S.sel=add;render();
+      }else{
+        const f=startTarget.__data__,ab=f&&f.id!=null?fipsToAbbr.get(+f.id):null;
+        if(ab){S.sel.has(ab)?S.sel.delete(ab):S.sel.add(ab);render()}
+      }};
+    window.addEventListener("pointermove",move);window.addEventListener("pointerup",up);
+  });
+  svg.on("dblclick",()=>{S.sel.clear();render()});
   // counter
   const n=filtered.length,ns=new Set(filtered.map(d=>d.STABBR)).size;
   $("counter").textContent=`${d3.format(",")(n)} ${n===1?"university":"universities"} in ${ns} ${ns===1?"state / territory":"states & territories"}`;
@@ -6618,13 +6634,12 @@ function renderTop(filtered){
 
 /* ---------- orchestration ---------- */
 function titles(){
-  const o=short(S.outcome),sel=S.sel.size?` · ${[...S.sel].sort().join(", ")}`:"";
+  const o=short(S.outcome),sel=S.sel.size?"x":"";
   $("tA").textContent=`① ${o} by ${short(S.cat).replace(/ \(click.*$/,"")}`;
   $("sA").textContent="Box = middle 50% of schools, bar = median, whiskers = 1.5 × IQR, dots = outliers. Sorted by median; groups under 5 schools are hidden.";
   $("tB").textContent=`② ${o} vs ${short(S.xvar)}`;
   $("tC").textContent=`③ State shading = ${S.mapStat.toLowerCase()} of ${o}`;
-  $("sC").textContent=S.drag?"Drag a rectangle to pick states (hold Shift to add). Turn the checkbox off to click states one at a time."
-                              :"Click states to add or remove them. Double-click empty map = clear."+sel;
+  $("sC").textContent="Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add to the selection). Double-click = clear."+(sel?` Selected: ${[...S.sel].sort().join(", ")}.`:"");
   $("tD").textContent=`④ Top 10 institutions: ${S.rank.toLowerCase()} ${o}`;
   $("sD").textContent=`Schools with at least ${d3.format(",")(S.minTop)} undergrads (slider above). Follows the state and scatter selections.`;
 }
@@ -6633,6 +6648,7 @@ function renderLinked(){
   renderBox(filtered);renderMap(base,filtered);renderTop(filtered);
 }
 function render(){
+  hideTip();
   const base=baseRows(),filtered=base.filter(d=>stateOK(d)&&brushOK(d));
   titles();renderBox(filtered);renderScatter(base);renderMap(base,filtered);renderTop(filtered);
 }
