@@ -1,6 +1,6 @@
 """
 Slim down College Scorecard "Most-Recent-Cohorts-Institution.csv" (3,300+ columns, ~100 MB)
-into colleges_slim.csv (~45 columns, ~1-2 MB) for the Vega-Lite dashboard.
+into colleges_slim.csv (~45 columns, ~1-2 MB) for the dashboard (Bachelor's-degree schools only).
 
 Usage:
     pip install pandas numpy
@@ -24,7 +24,7 @@ raw_cols = [
     "C150_4", "C150_L4", "GRAD_DEBT_MDN", "BBRR2_FED_UG_DFLT", "RET_FT4", "RET_FTL4",
     # cost / aid / income
     "COSTT4_A", "NPT4_PUB", "NPT4_PRIV", "TUITIONFEE_IN", "TUITIONFEE_OUT",
-    "PCTPELL", "PCTFLOAN", "UG25ABV", "NPT41_PUB", "NPT41_PRIV", "NPT45_PUB", "NPT45_PRIV",
+    "PCTPELL", "PCTFLOAN", "UG25ABV", "NPT45_PUB", "NPT45_PRIV",
     "NUM41_PUB", "NUM42_PUB", "NUM43_PUB", "NUM44_PUB", "NUM45_PUB",
     "NUM41_PRIV", "NUM42_PRIV", "NUM43_PRIV", "NUM44_PRIV", "NUM45_PRIV",
     "PCIP11", "PCIP13", "PCIP14", "PCIP51", "PCIP52",
@@ -35,6 +35,7 @@ num = [c for c in raw_cols if c not in ("INSTNM", "CITY", "STABBR")]
 df[num] = df[num].apply(pd.to_numeric, errors="coerce")
 
 df = df[df["CURROPER"] == 1].copy()          # only currently operating institutions
+df = df[df["PREDDEG"] == 3].copy()           # only schools whose predominant degree is a Bachelor's
 pct = lambda s: (s * 100).round(1)
 
 out = pd.DataFrame({
@@ -56,8 +57,6 @@ loc = df["LOCALE"]
 out["Locale"] = np.select(
     [loc.between(11, 13), loc.between(21, 23), loc.between(31, 33), loc.between(41, 43)],
     ["City", "Suburb", "Town", "Rural"], default="Not reported")
-out["Degree"] = df["PREDDEG"].map({0: "Not classified", 1: "Certificate", 2: "Associate",
-                                   3: "Bachelor's", 4: "Graduate"})
 
 shares = df[["UGDS_WHITE", "UGDS_BLACK", "UGDS_HISP", "UGDS_ASIAN"]]
 names = np.array(["White", "Black", "Hispanic", "Asian"])
@@ -107,7 +106,6 @@ def quint(k):  # students by family-income quintile (public / private columns ar
     return df[f"NUM4{k}_PUB"].fillna(df[f"NUM4{k}_PRIV"])
 tot = sum(quint(k) for k in range(1, 6))
 out["Lowincome_share"] = pct((quint(1) + quint(2)) / tot)          # family income < $48k (Title IV, first-time full-time)
-out["Net_price_lowest_income"] = df["NPT41_PUB"].fillna(df["NPT41_PRIV"]).round(0)   # family income $0-30k
 out["Net_price_highest_income"] = df["NPT45_PUB"].fillna(df["NPT45_PRIV"]).round(0)  # family income $110k+
 out["Share_over25"] = pct(df["UG25ABV"])
 out["Share_Engineering"] = pct(df["PCIP14"])
