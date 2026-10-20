@@ -53,6 +53,10 @@ out["Control"] = df["CONTROL"].map({1: "Public", 2: "Private nonprofit", 3: "Pri
 out["Region"] = df["REGION"].map({
     0: "U.S. service schools", 1: "New England", 2: "Mid East", 3: "Great Lakes", 4: "Plains",
     5: "Southeast", 6: "Southwest", 7: "Rocky Mountains", 8: "Far West", 9: "Outlying areas"})
+# The 5 military academies are coded "U.S. service schools"; give them their state's region so every state
+# belongs to exactly one region (needed for the region outlines on the map).
+_st = out.assign(_r=out["Region"])[out["Region"] != "U.S. service schools"].groupby("STABBR")["_r"].agg(lambda x: x.mode().iat[0])
+out["Region"] = np.where(out["Region"] == "U.S. service schools", out["STABBR"].map(_st), out["Region"])
 loc = df["LOCALE"]
 out["Locale"] = np.select(
     [loc.between(11, 13), loc.between(21, 23), loc.between(31, 33), loc.between(41, 43)],
