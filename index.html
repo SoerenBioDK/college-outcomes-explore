@@ -58,6 +58,7 @@ svg text{fill:var(--fg)} svg .axis text{fill:var(--muted)} svg .axis path,svg .a
 svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none}
 .state{stroke:var(--panel);stroke-width:.6;cursor:pointer;transition:fill .15s}
 .state.sel{stroke:var(--fg);stroke-width:2}
+.state.dim{opacity:.3}
 .tip{position:fixed;z-index:50;pointer-events:none;background:var(--fg);color:var(--bg);padding:6px 9px;border-radius:4px;font-size:12px;line-height:1.4;max-width:300px;opacity:0;transition:opacity .08s}
 .tip b{font-weight:600}
 .num{font-variant-numeric:tabular-nums}
@@ -2186,7 +2187,7 @@ function renderBox(data){
   g2.append("line").attr("x1",s=>x(s.m)).attr("x2",s=>x(s.m)).attr("y1",0).attr("y2",bh).attr("stroke","var(--median)").attr("stroke-width",2);
   g2.selectAll("circle").data(s=>s.out).join("circle").attr("cx",v=>x(v)).attr("cy",mid).attr("r",2.2).attr("fill","var(--box-stroke)").attr("fill-opacity",.4);
   g2.append("rect").attr("x",0).attr("width",W).attr("y",-2).attr("height",bh+4).attr("fill","transparent")
-    .on("mousemove",(e,s)=>showTip(e,`<b>${esc(s.k)}</b><br>${s.n} schools<br>median ${fmtVal(o,s.m)}<br>middle 50%: ${fmtVal(o,s.q1)} to ${fmtVal(o,s.q3)}`)).on("mouseleave",hideTip);
+    .on("mousemove",(e,s)=>showTip(e,`<b>${esc(s.k)}</b><br>${s.n} schools<br>median ${fmtVal(o,s.m)}<br>middle 50%: ${fmtVal(o,s.q1)} to ${fmtVal(o,s.q3)}`)).on("mouseenter",(e,s)=>highlightRegion(s.k)).on("mouseleave",()=>{hideTip();highlightRegion(null)});
 }
 
 /* ---------- ② scatter ---------- */
@@ -2239,27 +2240,41 @@ function renderScatter(base){
 }
 
 /* ---------- ③ map ---------- */
+function statOf(arr){
+  if(S.mapStat==="Median school")return d3.median(arr,d=>d[S.outcome]);
+  if(S.mapStat==="Mean school")return d3.mean(arr,d=>d[S.outcome]);
+  const w=arr.filter(d=>d.Enrollment>0);let sw=0,swy=0;for(const d of w){sw+=d.Enrollment;swy+=d.Enrollment*d[S.outcome]}
+  return sw?swy/sw:d3.mean(arr,d=>d[S.outcome]);
+}
 function stateValues(base){
   const out=new Map(), grp=d3.group(base.filter(d=>d.ST_FIPS!=null),d=>d.ST_FIPS);
-  for(const [f,arr] of grp){
-    let v;
-    if(S.mapStat==="Median school")v=d3.median(arr,d=>d[S.outcome]);
-    else if(S.mapStat==="Mean school")v=d3.mean(arr,d=>d[S.outcome]);
-    else{const w=arr.filter(d=>d.Enrollment>0);let sw=0,swy=0;for(const d of w){sw+=d.Enrollment;swy+=d.Enrollment*d[S.outcome]}v=sw?swy/sw:d3.mean(arr,d=>d[S.outcome])}
-    out.set(f,{v,n:arr.length});
-  }
+  for(const [f,arr] of grp)out.set(f,{v:statOf(arr),n:arr.length});
   return out;
+}
+// same statistic, but per Scorecard region (used when the boxplot is grouped by Region)
+function regionValues(base){
+  const out=new Map(), grp=d3.group(base.filter(d=>d.Region&&d.Region!=="Outlying areas"),d=>d.Region);
+  for(const [r,arr] of grp)out.set(r,{v:statOf(arr),n:arr.length});
+  return out;
+}
+// hover link between the boxplot rows and the map regions (only when grouped by Region)
+function highlightRegion(r){
+  if(S.cat!=="Region")r=null;
+  d3.selectAll("#mapBody path.state").classed("dim",f=>!!r&&regionOf(f)!==r);
+  d3.selectAll("#boxBody g.b").style("opacity",s=>!r||s.k===r?1:.3);
 }
 function renderMap(base,filtered){
   const host=$("mapBody"); host.innerHTML="";
   const W=Math.max(host.clientWidth,260),H=Math.min(Math.round(W*.62),440);
   const proj=d3.geoAlbersUsa().fitExtent([[4,4],[W-4,H-34]],states), path=d3.geoPath(proj);
-  const vals=stateValues(base), ext=d3.extent([...vals.values()],d=>d.v);
+  const regMode=S.cat==="Region", vals=stateValues(base), rvals=regMode?regionValues(base):null;
+  const shade=f=>regMode?rvals.get(regionOf(f)):vals.get(+f.id);
+  const ext=d3.extent([...(regMode?rvals:vals).values()],d=>d.v);
   const color=d3.scaleSequential(t=>d3.interpolateBlues(.05+.75*t)).domain(ext[0]==null?[0,1]:ext[0]===ext[1]?[ext[0],ext[0]+1]:ext);
   const svg=d3.select(host).append("svg").attr("width",W).attr("height",H);
   const gs=svg.append("g");
   const paths=gs.selectAll("path").data(states.features).join("path").attr("class",f=>"state"+(S.sel.has(fipsToAbbr.get(+f.id))?" sel":"")).attr("d",path)
-    .attr("fill",f=>{const o=vals.get(+f.id);return o&&o.v!=null?color(o.v):"var(--nodata)"});
+    .attr("fill",f=>{const o=shade(f);return o&&o.v!=null?color(o.v):"var(--nodata)"});
   paths.filter(f=>S.sel.has(fipsToAbbr.get(+f.id))).raise();
   // labels for selected states
   gs.selectAll("text.sl").data(states.features.filter(f=>S.sel.has(fipsToAbbr.get(+f.id)))).join("text").attr("class","sl")
@@ -2270,8 +2285,11 @@ function renderMap(base,filtered){
     gs.append("path").datum(regionBorders).attr("d",path).attr("fill","none").attr("stroke","var(--fg)").attr("stroke-width",2).attr("stroke-linejoin","round").style("pointer-events","none");
     const lab=[]; for(const [r,shape] of regionShapes){ if(!shape||!shape.coordinates||!shape.coordinates.length)continue;
       const parts=shape.coordinates.map(c=>({type:"Polygon",coordinates:c})); const big=d3.greatest(parts,p=>path.area(p)); if(!big)continue; const c=path.centroid(big); if(!isNaN(c[0]))lab.push([r,c]); }
-    gs.selectAll("text.rl").data(lab).join("text").attr("class","rl").attr("transform",o=>`translate(${o[1][0]},${o[1][1]})`).attr("text-anchor","middle")
-      .style("font-weight",700).style("font-size","12px").style("paint-order","stroke").style("stroke","var(--panel)").style("stroke-width","3.5px").style("pointer-events","none").text(o=>o[0]);
+    const tx=gs.selectAll("text.rl").data(lab).join("text").attr("class","rl").attr("transform",o=>`translate(${o[1][0]},${o[1][1]})`).attr("text-anchor","middle")
+      .style("font-weight",700).style("font-size","12px").style("paint-order","stroke").style("stroke","var(--panel)").style("stroke-width","3.5px").style("pointer-events","none");
+    tx.append("tspan").attr("x",0).attr("dy","-0.15em").text(o=>o[0]);
+    tx.append("tspan").attr("x",0).attr("dy","1.2em").style("font-weight",500).style("font-size","11px")
+      .text(o=>{const r=rvals.get(o[0]);return r&&r.v!=null?`${fmtVal(S.outcome,r.v)} · n=${r.n}`:"no schools"});
   }
   // school dots
   const inF=new Set(filtered.map(d=>d.UNITID)),hasSel=S.sel.size>0||S.brush;
@@ -2283,7 +2301,7 @@ function renderMap(base,filtered){
   const defs=svg.append("defs").append("linearGradient").attr("id",id);
   d3.range(0,1.01,.1).forEach(t=>defs.append("stop").attr("offset",t*100+"%").attr("stop-color",d3.interpolateBlues(.05+.75*t)));
   svg.append("rect").attr("x",10).attr("y",ly).attr("width",lw).attr("height",9).attr("fill",`url(#${id})`);
-  svg.append("text").attr("x",10).attr("y",ly-4).style("font-size","11px").text("State value");
+  svg.append("text").attr("x",10).attr("y",ly-4).style("font-size","11px").text(regMode?"Region value":"State value");
   if(ext[0]!=null){svg.append("text").attr("x",10).attr("y",ly+21).style("font-size","11px").text(fmtVal(S.outcome,ext[0]));
     svg.append("text").attr("x",10+lw).attr("y",ly+21).attr("text-anchor","end").style("font-size","11px").text(fmtVal(S.outcome,ext[1]));}
   svg.append("rect").attr("x",10+lw+16).attr("y",ly).attr("width",9).attr("height",9).attr("fill","var(--nodata)");
@@ -2293,10 +2311,12 @@ function renderMap(base,filtered){
   svg.on("mousemove",e=>{
     if(e.buttons){hideTip();return}
     const [px,py]=d3.pointer(e,svg.node()),hit=qt.find(px,py,6);
-    if(hit){const d=hit.d;showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${esc(short(S.outcome))}: ${fmtVal(S.outcome,d[S.outcome])}`);return}
+    if(hit){const d=hit.d;highlightRegion(d.Region);showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${esc(short(S.outcome))}: ${fmtVal(S.outcome,d[S.outcome])}`);return}
     const f=e.target.__data__; if(f&&f.id!=null&&e.target.tagName==="path"){const ab=fipsToAbbr.get(+f.id),o=vals.get(+f.id);
-      showTip(e,`<b>${esc(NAMES[ab]||ab||"")}</b><br>State value: ${o?fmtVal(S.outcome,o.v):"n/a"}<br>Schools in state: ${o?o.n:0}`)} else hideTip()});
-  svg.on("mouseleave",hideTip);
+      if(regMode){const rg=regionOf(f),r=rvals.get(rg);highlightRegion(rg);
+        showTip(e,`<b>${esc(rg||"")}</b> (${esc(NAMES[ab]||ab||"")})<br>Region value: ${r?fmtVal(S.outcome,r.v):"n/a"}<br>Schools in region: ${r?r.n:0}<br>State value: ${o?fmtVal(S.outcome,o.v):"n/a"}`)}
+      else showTip(e,`<b>${esc(NAMES[ab]||ab||"")}</b><br>State value: ${o?fmtVal(S.outcome,o.v):"n/a"}<br>Schools in state: ${o?o.n:0}`)} else {hideTip();highlightRegion(null)}});
+  svg.on("mouseleave",()=>{hideTip();highlightRegion(null)});
   svg.style("touch-action","pan-y").style("cursor","crosshair");
   paths.style("cursor","pointer");
   const cents=states.features.map(f=>({ab:fipsToAbbr.get(+f.id),c:path.centroid(f)})).filter(o=>o.ab&&!isNaN(o.c[0]));
@@ -2352,7 +2372,7 @@ function titles(){
   $("tA").textContent=`① ${o} by ${short(S.cat).replace(/ \(click.*$/,"")}`;
   $("sA").textContent="Box = middle 50% of schools, bar = median, whiskers = 1.5 × IQR, dots = outliers. Sorted by median; groups under 5 schools are hidden.";
   $("tB").textContent=`② ${o} vs ${short(S.xvar)}`;
-  $("tC").textContent=`③ State shading = ${S.mapStat.toLowerCase()} of ${o}`;
+  $("tC").textContent=`③ ${S.cat==="Region"?"Region":"State"} shading = ${S.mapStat.toLowerCase()} of ${o}`;
   $("sC").textContent="Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add to the selection). Double-click = clear."+(sel?` Selected: ${[...S.sel].sort().join(", ")}.`:"");
   $("tD").textContent=`④ Top 10 institutions: ${S.rank.toLowerCase()} ${o}`;
   $("sD").textContent=`Schools with at least ${d3.format(",")(S.minTop)} undergrads (slider above). Follows the state and scatter selections.`;
