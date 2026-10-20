@@ -9,10 +9,10 @@ Four linked views. Everything responds to the filters, to clicking states on the
 
 1. **Boxplot:** the chosen outcome grouped by a categorical variable (school type, region, locale, race or sex composition, size, selectivity, minority-serving status, or state). Sorted by median; groups under 5 schools are hidden.
 2. **Scatterplot:** the outcome against a continuous variable (23 options such as cost, net price, Pell share, faculty salary), coloured by school type, with a linear trend line. Drag a rectangle to select schools.
-3. **Map:** states shaded by the median, mean or enrollment-weighted mean of the outcome, with every school as a dot. Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add). A counter shows how many universities in how many states match.
+3. **Map:** states shaded by the median, mean or enrollment-weighted mean of the outcome, with every school as a dot. Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add). A counter shows how many universities in how many states match. When the boxplot is grouped by Region, the region borders and names are drawn on the map.
 4. **Top 10:** the highest or lowest institutions for the current selection.
 
-Other controls: school type, minimum undergraduate size, and a university search with suggestions.
+Other controls: school type, region (the College Scorecard's 8 regions plus outlying areas), minimum undergraduate size, and a university search with suggestions.
 
 ## Run it locally
 Open `index.html` in a browser. The data and the U.S. map are embedded in the file; it only needs an internet connection to load the D3 and TopoJSON libraries.
@@ -37,7 +37,7 @@ Things to know about the data:
 - It covers Title IV students only (those receiving federal aid), not all students.
 - Earnings are medians, so the map offers median, mean and enrollment-weighted options and does not simply average them.
 - Missing values (`PrivacySuppressed`, `NULL`) are left out, so some variables cover fewer schools. Dropdown labels mark the ones with weak coverage.
-- Only currently operating institutions whose predominant degree is a Bachelor's are included (1,944 schools; 1,790 of them have 10-year earnings). The numbers describe whole schools, including all federally aided students there, not only Bachelor's students.
+- Only currently operating institutions whose predominant degree is a Bachelor's are included (1,944 schools; 1,790 of them have 10-year earnings). The 5 U.S. service academies (coded "U.S. service schools" by the Scorecard) are kept and assigned to their state's region. The numbers describe whole schools, including all federally aided students there, not only Bachelor's students.
 - Variables were chosen using the College Scorecard documentation and errata; outdated variables were replaced.
 
 ## Design
