@@ -2130,7 +2130,7 @@ const regionShapes=new Map(REGIONS.map(r=>[r,topojson.merge(topo,topo.objects.st
 
 /* ---------- state ---------- */
 const S={outcome:"Earnings_10yr",cat:"STABBR",xvar:"Cost_of_attendance",ctrl:"All",region:"All",minSize:0,search:"",
-         mapMode:"School dots",mapStat:"Median school",sel:new Set(),brush:null,pc:{},focus:null,whom:0,view:"explore"};
+         mapMode:"School dots",mapStat:"Median school",sel:new Set(),brush:null,pc:{},focus:null,whom:0,view:"explore",pcColor:"type"};
 const $=id=>document.getElementById(id);
 const tip=$("tip");
 function showTip(e,html){tip.innerHTML=html;tip.style.opacity=1;const w=tip.offsetWidth;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+tip.offsetHeight>innerHeight-8)y=e.clientY-tip.offsetHeight-14;tip.style.left=x+"px";tip.style.top=y+"px";}
@@ -2195,7 +2195,7 @@ sIn.addEventListener("blur",()=>{sList.hidden=true});
 sIn.addEventListener("focus",()=>{if(sIn.value)suggest()});
 
 const legendHTML=()=>Object.entries(COLORS).map(([k,c])=>`<span><i style="background:${c}"></i>${k}</span>`).join("");
-$("lgE").innerHTML=legendHTML(); $("lgA").innerHTML=legendHTML(); $("lgB").innerHTML=legendHTML();
+$("lgE").innerHTML=legendHTML(); $("lgB").innerHTML=legendHTML();
 
 /* ---------- ① parallel coordinates ---------- */
 const PCAX=["Net_price","Pell_share","Completion_rate","Retention_rate","Grad_debt","Earnings_10yr"];
@@ -2204,34 +2204,55 @@ const pcOK=d=>{for(const k in S.pc){const r=S.pc[k],v=d[k]; if(v==null||v<r[0]||
 const fullOK=d=>stateOK(d)&&brushOK(d)&&pcOK(d);
 function renderOthers(){ // after a drag on an axis: everything except this panel (so the brush is not destroyed mid-drag)
   const base=baseRows(),filtered=base.filter(fullOK); renderScatter(base);renderMap(base,filtered);renderProfile(base,filtered);}
+const rb=document.createElement("button"); rb.type="button"; rb.className="mini"; rb.textContent="Reset axis filters"; rb.hidden=true; rb.style.cssText="margin-left:auto;font-size:12px;padding:2px 8px";
+rb.addEventListener("click",()=>{S.pc={};render()});
+const pcSwitch=document.createElement("label"); pcSwitch.style.cssText="display:inline-flex;gap:6px;align-items:center";
+pcSwitch.innerHTML='Colour lines by <select id="pcColor" aria-label="Colour parallel-coordinate lines by"><option value="type">School type</option><option value="outcome">Outcome (blues)</option></select>';
+pcSwitch.querySelector("select").addEventListener("change",e=>{S.pcColor=e.target.value;renderPC(baseRows())});
+const syncReset=()=>{rb.hidden=!Object.keys(S.pc).length};
 function renderPC(base){
   const host=$("boxBody"); host.innerHTML="";
-  const full=base.filter(d=>PCAX.every(k=>d[k]!=null));
-  $("sA").textContent=`${d3.format(",")(full.length)} schools with all ${PCAX.length} values`;
+  let full=base.filter(d=>PCAX.every(k=>d[k]!=null));
+  const byOutcome=S.pcColor==="outcome", qc=d3.scaleQuantile().domain(full.map(d=>d[S.outcome]).filter(v=>v!=null)).range(d3.schemeBlues[7].slice(2));
+  if(byOutcome) full=full.slice().sort((a,b)=>(a[S.outcome]??-Infinity)-(b[S.outcome]??-Infinity)); // darkest lines end up on top
+  const lineCol=d=>byOutcome?(d[S.outcome]==null?"#999":qc(d[S.outcome])):(COLORS[d.Control]||"#999"), lineOp=d=>fullOK(d)?(byOutcome?.45:.4):.09;
+  const lg=$("lgA"); lg.innerHTML=""; lg.appendChild(pcSwitch); pcSwitch.querySelector("select").value=S.pcColor;
+  const key=document.createElement("span"); key.style.cssText="display:inline-flex;gap:6px;align-items:center"; lg.appendChild(key);
+  if(byOutcome&&full.length){const rf0=isMoney(S.outcome)?d3.format("$.3~s"):(v=>Math.round(v)+"%"),ex=d3.extent(full,d=>d[S.outcome]);
+    key.innerHTML=`${esc(rf0(ex[0]))} `+qc.range().map(c=>`<i style="background:${c};border-radius:0;width:18px;height:9px"></i>`).join("")+` ${esc(rf0(ex[1]))} <span>(${esc(short(S.outcome))}, 5 classes)</span>`;}
+  else key.innerHTML=legendHTML();
+  lg.appendChild(rb);
+  $("sA").textContent=`${d3.format(",")(full.length)} schools with all ${PCAX.length} values · drag on an axis to filter, click a line to follow a school`;
   if(!full.length){host.innerHTML='<p class="empty">No school has all six values with the current filters.</p>';return}
   const W=Math.max(host.clientWidth,300),H=360,m={l:46,r:62,t:46,b:14};
   const xs=d3.scalePoint(PCAX,[m.l,W-m.r]),ys={};
   PCAX.forEach(k=>ys[k]=d3.scaleLinear(d3.extent(rows,d=>d[k]),[H-m.b,m.t]).nice()); // axes cover all schools, so they stay put when filters change
   const line=d=>d3.line()(PCAX.map(k=>[xs(k),ys[k](d[k])]));
+  syncReset();
   const svg=d3.select(host).append("svg").attr("width",W).attr("height",H);
   const paths=svg.append("g").attr("fill","none").selectAll("path").data(full).join("path").attr("d",line);
-  const style=()=>paths.attr("stroke",d=>fullOK(d)?(COLORS[d.Control]||"#999"):"var(--muted)").attr("stroke-opacity",d=>fullOK(d)?.4:.09).attr("stroke-width",d=>fullOK(d)?1.1:.8)
+  const style=()=>paths.attr("stroke",d=>fullOK(d)?lineCol(d):"var(--muted)").attr("stroke-opacity",lineOp).attr("stroke-width",d=>fullOK(d)?1.1:.8)
     .filter(fullOK).raise();
   style();
+  const restore=el=>d3.select(el).attr("stroke-width",d=>fullOK(d)?1.1:.8).attr("stroke-opacity",lineOp).attr("stroke",d=>fullOK(d)?lineCol(d):"var(--muted)");
   paths.style("cursor","pointer")
+    .on("mouseenter",function(e,d){ if(fullOK(d))d3.select(this).raise().attr("stroke-width",3.2).attr("stroke-opacity",1).attr("stroke","var(--median)"); })
     .on("mousemove",(e,d)=>{ if(!fullOK(d))return; showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>`+PCAX.map(k=>`${esc(PCL[k])}: ${fmtVal(k,d[k])}`).join("<br>")+`<br><i>Click to follow in ④</i>`)})
-    .on("mouseleave",hideTip).on("click",(e,d)=>{ if(!fullOK(d))return; S.focus=(S.focus===d.UNITID?null:d.UNITID); hideTip(); later(()=>{titles();renderLinked();}); });
+    .on("mouseleave",function(){hideTip();restore(this)}).on("click",(e,d)=>{ if(!fullOK(d))return; S.focus=(S.focus===d.UNITID?null:d.UNITID); hideTip(); later(()=>{titles();renderLinked();}); });
   const fr=S.focus!=null?full.find(d=>d.UNITID===S.focus):null;
   if(fr&&fullOK(fr)){ svg.append("path").attr("d",line(fr)).attr("fill","none").attr("stroke","var(--panel)").attr("stroke-width",5).style("pointer-events","none");
     svg.append("path").attr("d",line(fr)).attr("fill","none").attr("stroke","var(--median)").attr("stroke-width",2.4).style("pointer-events","none"); }
   PCAX.forEach(k=>{
     const g=svg.append("g").attr("transform",`translate(${xs(k)},0)`);
     g.append("g").attr("class","axis").call(d3.axisLeft(ys[k]).ticks(5).tickFormat(tickFmt(k)).tickSize(3)).selectAll("text").style("paint-order","stroke").style("stroke","var(--panel)").style("stroke-width","3px").style("stroke-linejoin","round");
-    g.append("text").attr("y",m.t-16).attr("text-anchor","middle").style("font-size","11.5px").style("font-weight",600).attr("fill","var(--fg)").text(PCL[k]);
-    const br=d3.brushY().extent([[-9,m.t],[9,H-m.b]]).on("brush end",e=>{
+    g.append("text").attr("y",m.t-26).attr("text-anchor","middle").style("font-size","11.5px").style("font-weight",600).attr("fill","var(--fg)").text(PCL[k]);
+    const rf=isMoney(k)?d3.format("$.3~s"):(v=>Math.round(v)+"%");
+    const rangeTxt=g.append("text").attr("y",m.t-11).attr("text-anchor","middle").style("font-size","10.5px").style("font-family","var(--mono)").attr("fill","var(--accent)");
+    const showRange=()=>rangeTxt.text(S.pc[k]?`${rf(S.pc[k][0])}–${rf(S.pc[k][1])}`:""); showRange();
+    const br=d3.brushY().extent([[-15,m.t],[15,H-m.b]]).on("brush end",e=>{
       if(!e.sourceEvent)return;
       if(!e.selection)delete S.pc[k]; else S.pc[k]=[ys[k].invert(e.selection[1]),ys[k].invert(e.selection[0])];
-      style();hideTip();later(renderOthers);});
+      showRange();style();hideTip();syncReset();later(renderOthers);});
     const bg=g.append("g").attr("class","brush").call(br);
     bg.select(".selection").attr("fill","var(--accent)").attr("fill-opacity",.25).attr("stroke","var(--accent)");
     if(S.pc[k]){const [lo,hi]=S.pc[k],cl=v=>Math.max(m.t,Math.min(H-m.b,v)); const t=cl(ys[k](hi)),b2=cl(ys[k](lo)); if(b2-t>1)bg.call(br.move,[t,b2]);}
@@ -2518,7 +2539,7 @@ document.querySelector(".tabs").addEventListener("keydown",e=>{ if(e.key==="Arro
 function titles(){
   const o=short(S.outcome),sel=S.sel.size?"x":"";
   $("tA").textContent="① Parallel coordinates: cost, access, outcomes and debt";
-  INFO.A="Each line is one school, drawn through six measures. Drag on any axis to keep only schools in that range (several axes can be combined; click the axis to clear it). Click a line to follow that school in ④. Only schools with all six values are drawn, and the axes cover all schools so they do not move when you filter. Coloured by school type.";
+  INFO.A="Each line is one school, drawn through six measures. Drag on any axis to keep only schools in that range (several axes can be combined; click the axis to clear it). Click a line to follow that school in ④. Only schools with all six values are drawn, and the axes cover all schools so they do not move when you filter. Lines are coloured by school type or by the chosen outcome (switch above the plot).";
   $("tB").textContent=`② ${o} vs ${short(S.xvar)}`;
   $("tC").textContent=S.mapMode==="School dots"?`③ Each dot is a school, coloured by ${o}`:`③ ${S.cat==="Region"?"Region":"State"} shading = ${S.mapStat.toLowerCase()} of ${o}`;
   INFO.C=(S.mapMode==="School dots"?"Darker blue = higher value; the five colours are quantile classes, each holding about a fifth of the schools shown. States are grey and only select. ":"")+"Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add to the selection). Double-click = clear."+(sel?` Selected: ${[...S.sel].sort().join(", ")}.`:"");
