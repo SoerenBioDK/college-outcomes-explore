@@ -8,7 +8,7 @@ An interactive dashboard for exploring how U.S. college outcomes (earnings, comp
 Three views, switched with the tabs at the top: **Explore** (panels 1-4, linked), **For whom?** (panel 5) and **Find a school** (panels 6-9). Explore and For whom? share the same filters and selections; Find a school has its own controls. Everything responds to the filters, to clicking states on the map, to brushing in the scatterplot and to brushing the axes of the parallel coordinates. Each chart has an (i) button next to its title; click it to see how to read and use that chart.
 
 1. **Parallel coordinates:** one line per school through six measures (net price, % Pell grants, completion, retention, graduate debt, 10-year earnings). Drag on an axis to keep a range; click a line to follow that school in view 4. Only the schools with all six values are drawn.
-2. **Scatterplot:** the outcome against a continuous variable (29 options such as cost, net price, Pell share, faculty salary, two county variables, two campus-crime rates and two Greek-life percentages), coloured by school type, with a linear trend line. Drag a rectangle to select schools.
+2. **Scatterplot:** the outcome against a continuous variable (25 options such as cost, net price, Pell share, faculty salary and two county variables), coloured by school type, with a linear trend line. Drag a rectangle to select schools.
 3. **Map:** by default every school is a dot, coloured by the chosen outcome in five quantile classes (each holding about a fifth of the schools shown; the five darker steps of ColorBrewer's 7-class Blues) and sized by undergraduate enrollment; the states are ColorBrewer grey and work only as a selector. A "Map shows" switch gives the earlier version instead: states shaded by the median, mean or enrollment-weighted mean of the outcome, with small plain dots. Click a state to add or remove it, or drag a box over the map to pick several (hold Shift to add). A counter shows how many universities in how many states match. When the boxplot is grouped by Region, the region borders and names are drawn on the map.
 4. **Percentile profile:** ranks one school (click its line in view 1, or use Search) among all 1,944 schools on each of the six measures, 0 = lowest, 100 = highest. The band shows the middle 50% of the schools currently selected and the tick their median; with no school chosen, the dot is the median school of the selection.
 5. **For whom?** One dot per school comparing two groups of students at the same school (pick the comparison in the panel): earnings of students from families with income of $30k or less vs above $75k (fixed FAFSA income bands, not equal thirds); loan repayment rate (5 years) for Pell vs non-Pell students, family income $30k or less vs above $75k, or first-generation vs other students. Both axes use the same scale, so the dashed diagonal means "equal". The side text gives the median gap, the share of schools above the line and r for the current selection. Federally aided students only; descriptive, not causal.
@@ -25,7 +25,7 @@ The dashboard is the single file `index.html`: the data and the U.S. map are emb
 | Path | What it is |
 |---|---|
 | `index.html` | The D3.js dashboard (served by GitHub Pages) |
-| `data/colleges_slim.csv` | Slimmed data: 1,944 operating Bachelor's-degree institutions, 62 columns (47 from the Scorecard, 2 county variables, 2 campus-crime rates, 2 Greek-life percentages, 8 group columns, `Top_fields`, `Special`) |
+| `data/colleges_slim.csv` | Slimmed data: 1,944 operating Bachelor's-degree institutions, 59 columns (47 from the Scorecard, 2 county variables, 8 group columns, `Top_fields`, `Special`) |
 | `data/field_programs.csv` | Bachelor's programs (UNITID, 4-digit CIP code, graduates per year, earnings 5 and 1 years after completing, debt at the school), from the Field of Study file |
 | `data/cip_names.csv` | The four-digit CIP codes and their names |
 | `build/` | Everything needed to rebuild the three data files (scripts and small lookup files); see "Rebuild the data" below |
@@ -38,8 +38,6 @@ Files in `build/`:
 | `add_county_data.py` | Adds the two county variables (Census data in `acs2021_county.json`, county of each school in `school_county.csv`) |
 | `assign_county.mjs` | Node script that finds each school's county from latitude/longitude and writes `school_county.csv`; usage is in its first lines |
 | `acs2021_county.json` | Raw download from the Census Bureau API: American Community Survey 5-year estimates 2017-2021, all counties |
-| `add_crime_greek_data.py` | Adds the four crime and Greek-life columns from `crime_greek_lookup.csv` |
-| `make_crime_greek_lookup.py` | Makes `crime_greek_lookup.csv` and documents every rule used to derive it from the 100 MB merged file (not in the repository); usage is in its first lines |
 | `add_group_columns.py` | Adds eight group columns (earnings by family-income band ($30k or less / above $75k); repayment rate by Pell, family income, first-generation status) from the full Scorecard file |
 | `add_top_fields.py` | Adds the text column `Top_fields` (up to three largest fields of study by share of degrees, from the `PCIP` columns) |
 | `add_special_flag.py` | Adds the column `Special` (1 = the nine military and maritime academies, found by school name) |
@@ -55,19 +53,17 @@ Run from the repository folder, in this order (the last command is only needed f
 pip install pandas numpy
 python build/prepare_data.py Most-Recent-Cohorts-Institution.csv data/colleges_slim.csv
 python build/add_county_data.py
-python build/add_crime_greek_data.py
 python build/add_group_columns.py Most-Recent-Cohorts-Institution.csv data/colleges_slim.csv
 python build/add_top_fields.py Most-Recent-Cohorts-Institution.csv data/colleges_slim.csv
 python build/add_special_flag.py data/colleges_slim.csv
 python build/make_field_programs.py Most-Recent-Cohorts-Field-of-Study.csv data/colleges_slim.csv
 ```
 
-After rebuilding, the CSV contents have to be pasted into `index.html` again (the dashboard embeds them). Checked on 2026-11-03: running these commands on the Scorecard files gives byte-identical `colleges_slim.csv`, `field_programs.csv` and `cip_names.csv`; `assign_county.mjs` was not re-run (it needs extra Node packages), its result `school_county.csv` is used as is.
+After rebuilding, the CSV contents have to be pasted into `index.html` again (the dashboard embeds them). Checked on 2026-11-03: running these commands on the Scorecard files gives the same `colleges_slim.csv` (compared value by value) and byte-identical `field_programs.csv` and `cip_names.csv`; `assign_county.mjs` was not re-run (it needs extra Node packages), its result `school_county.csv` is used as is.
 
 `add_county_data.py` adds two county-level variables from the U.S. Census Bureau's American Community Survey (5-year estimates 2017–2021, chosen to match the years in which the Scorecard earnings were measured): the median household income of the school's county and the share of adults aged 25+ with a bachelor's degree or higher. The county of each school comes from its latitude and longitude (`build/school_county.csv`).
 
 Things to know about the data:
-- **Crime and Greek-life columns (added later):** they come from a merged file shared by a project partner (Scorecard + campus-crime counts + a Greek-life list), not from the Scorecard. Crime values are on-campus counts per 1,000 students, averaged over the reported years; the three years are labelled 5, 6 and 7 in the source, probably 2005–07 (**not confirmed**), so they are about 15 years older than the earnings. Only schools whose name matched exactly are used, and the file's own enrollment must be at least half of the Scorecard's undergraduate count. 1,145 of 1,944 schools have a crime value. Greek-life percentages exist for 322 schools (17%); 0 means the list says the school has no fraternities or sororities, blank means the school is not in the list or reported no percentage. Branch campuses and tiny schools can give extreme crime rates.
 - It covers Title IV students only (those receiving federal aid), not all students.
 - Earnings are medians, so the map offers median, mean and enrollment-weighted options and does not simply average them.
 - Missing values (`PrivacySuppressed`, `NULL`) are left out, so some variables cover fewer schools. Dropdown labels mark the ones with weak coverage.
