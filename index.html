@@ -108,7 +108,6 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
 <div class="wrap">
 <header>
   <h1>College Outcomes Explorer</h1>
-  <p>U.S. College Scorecard, most recent cohorts: 1,944 operating Bachelor's-degree institutions. Pick an outcome, compare groups, look for relationships, and click states on the map to narrow everything down. Three views: Explore (four linked panels), For whom? (two groups of students at the same school) and Find a school (set an area, a debt limit and an earnings goal).</p>
 </header>
 <nav class="tabs" role="tablist" aria-label="Views"><button type="button" role="tab" id="tabExplore" aria-selected="true" aria-controls="gridExplore">Explore</button><button type="button" role="tab" id="tabWhom" aria-selected="false" aria-controls="gridWhom">For whom?</button><button type="button" role="tab" id="tabFind" aria-selected="false" aria-controls="gridFind">Find a school</button></nav>
 
@@ -134,7 +133,7 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
 <div class="grid" id="gridExplore">
   <section class="panel" aria-label="Parallel coordinates"><h3 id="tA"></h3><p class="sub" id="sA"></p><div class="legend" id="lgA"></div><div class="body" id="boxBody"></div></section>
   <section class="panel" aria-label="Scatterplot"><h3 id="tB"></h3><p class="sub" id="sB"></p><div class="legend" id="lgB"></div><div class="body" id="scBody"></div></section>
-  <section class="panel" aria-label="Map"><div class="phead"><h3 id="tC"></h3><div class="counter" id="counter" aria-live="polite"></div></div><p class="sub" id="sC"></p><div class="body" id="mapBody"></div></section>
+  <section class="panel" aria-label="Map"><div class="phead"><h3 id="tC"></h3><div class="counter" id="counter" aria-live="polite"></div></div><p class="sub" id="sC"></p><div class="legend" id="lgC"></div><div class="body" id="mapBody"></div></section>
   <section class="panel" aria-label="Percentile profile"><h3 id="tD"></h3><p class="sub" id="sD"></p><div class="body" id="topBody"></div></section>
 </div>
 <div class="grid" id="gridWhom" hidden>
@@ -144,7 +143,7 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
   <section class="panel wide crit" aria-label="Criteria">
     <div class="fctl2 c4">
       <div class="field"><label for="fArea">Area</label><select id="fArea"></select></div>
-      <div class="field"><label for="fGroup">Broad field (narrows the next list)</label><select id="fGroup"></select></div>
+      <div class="field"><label for="fGroup">Broad field (largest program per school)</label><select id="fGroup"></select></div>
       <div class="field"><label for="fField">Field of study (Bachelor's)</label><select id="fField"></select></div>
       <div class="field"><label for="fColor">Colour the dots by</label><select id="fColor"></select></div>
     </div>
@@ -165,7 +164,6 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
   <section class="panel" aria-label="Schools that fit"><h3 id="tF1"></h3><p class="sub" id="sF1"></p><div class="body" id="findList"></div></section>
   <section class="panel" aria-label="Profile of the chosen school"><h3 id="tF4"></h3><p class="sub" id="sF4"></p><div class="body" id="findProfile"></div><div class="fnote" id="findFields"></div></section>
 </div>
-<p class="foot">Data: U.S. Department of Education College Scorecard (Title IV students only). Earnings are medians, so state values of "mean school" treat each school equally and "enrollment-weighted" favours big schools. Missing codes (PrivacySuppressed, NULL) are left out, so some variables cover fewer schools. The two county variables come from the Census Bureau's American Community Survey 2017–2021 and describe the school's county, not its students; schools in the same county share one value. The crime variables are on-campus counts per 1,000 students from a merged file shared by a project partner: older data (the file labels the three years 5, 6 and 7, probably 2005–07, not confirmed), schools whose names matched, and the file’s own enrollment figures, so they are not from the same period as the earnings. Greek-life percentages cover only the schools in a Greek-life list (about 17% of the schools here).</p>
 </div>
 <div class="tip" id="tip"></div>
 <script type="text/plain" id="fieldcsv">UNITID,CIPCODE,Count,Earn_5yr,Earn_1yr,Debt
@@ -31623,6 +31621,7 @@ sList.addEventListener("mousedown",e=>{const li=e.target.closest("li[data-i]");i
 sIn.addEventListener("blur",()=>{sList.hidden=true});
 sIn.addEventListener("focus",()=>{if(sIn.value)suggest()});
 
+const sizeKey=(rad,label)=>`<span class="lsep">Dot size = ${label}:</span>`+[1000,10000,30000].map(v=>{const r=rad(v);return `<span><svg width="${2*r+2}" height="${2*r+2}" aria-hidden="true"><circle cx="${r+1}" cy="${r+1}" r="${r}" fill="none" stroke="var(--muted)" stroke-width="1.2"/></svg>${v===30000?"30,000+":d3.format(",")(v)}</span>`}).join("");
 const legendHTML=()=>Object.entries(COLORS).map(([k,c])=>`<span><i style="background:${c}"></i>${k}</span>`).join("");
 $("lgE").innerHTML=legendHTML(); $("lgB").innerHTML=legendHTML();
 
@@ -31799,6 +31798,7 @@ function renderMap(base,filtered){
   const inF=new Set(filtered.map(d=>d.UNITID)),hasSel=S.sel.size>0||S.brush;
   const dots=[]; for(const d of base){if(d.ST_FIPS>56||d.LATITUDE==null)continue;const p=proj([d.LONGITUDE,d.LATITUDE]);if(p)dots.push({x:p[0],y:p[1],d,on:inF.has(d.UNITID)})}
   const rad=d3.scaleSqrt().domain([100,30000]).range([2,8]).clamp(true), rOf=o=>dotMode?(o.d.Enrollment==null?2:rad(o.d.Enrollment)):1.7;
+  $("lgC").innerHTML=dotMode?sizeKey(rad,"undergraduate enrolment (students)"):"";
   if(dotMode)dots.sort((a,b)=>(b.d.Enrollment||0)-(a.d.Enrollment||0)); // big dots first, small ones stay visible on top
   gs.append("g").style("pointer-events","none").selectAll("circle").data(dots).join("circle").attr("cx",o=>o.x).attr("cy",o=>o.y).attr("r",rOf)
     .attr("fill",o=>dotMode?color(o.d[S.outcome]):"var(--dot)").attr("stroke",dotMode?"var(--median)":"none").attr("stroke-width",.5)
@@ -31970,10 +31970,10 @@ $("fNet").addEventListener("input",e=>{S.find.net=+e.target.value;later(renderFi
 $("fAcad").addEventListener("change",e=>{S.find.acad=e.target.checked;renderFind()});
 const NETMAX=60000, ROWBYID=new Map(rows.map(d=>[d.UNITID,d])), PROGBYFIELD=d3.group([...PROG.values()].flat().filter(g=>g.e5!=null&&g.db!=null&&ROWBYID.has(g.u)),g=>g.c);
 const GROUPS=[["Natural sciences and mathematics",["26","27","40"]],["Agriculture and natural resources",["01","03"]],["Engineering and engineering technology",["14","15"]],["Computing and information",["11"]],["Health",["51"]],["Business and management",["52"]],["Social sciences and public service",["05","42","43","44","45"]],["Humanities",["16","23","24","38","54"]],["Arts, design, architecture and media",["04","09","10","50"]],["Education",["13"]],["Other (interdisciplinary, family sciences, recreation and fitness, transport)",["19","30","31","49"]]];
-const G2=new Map(GROUPS.flatMap(([g,cs])=>cs.map(c=>[c,g])));
-const FIELDOPTS=[...PROGBYFIELD].filter(([c,a])=>a.length>=30).map(([c,a])=>({c,label:`${CIPN.get(c)||c} (${a.length} schools)`,grp:G2.get(c.slice(0,2))||GROUPS[GROUPS.length-1][0]}));
+const G2=new Map(GROUPS.flatMap(([g,cs])=>cs.map(c=>[c,g]))), grpOf=c=>G2.get(c.slice(0,2))||GROUPS[GROUPS.length-1][0], PROGALL=[...PROGBYFIELD.values()].flat();
+const FIELDOPTS=[...PROGBYFIELD].filter(([c,a])=>a.length>=30).map(([c,a])=>({c,label:`${CIPN.get(c)||c} (${a.length} schools)`,grp:grpOf(c)}));
 function fillFieldSel(){ const s=$("fField"); s.innerHTML=""; const add=(k,l)=>{const e=document.createElement("option");e.value=k;e.textContent=l;s.appendChild(e)};
-  add("","Any field: school-level numbers"); FIELDOPTS.filter(o=>!S.find.group||o.grp===S.find.group).sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,o.label)); s.value=S.find.field; }
+  add("",S.find.group?"All fields in this group: largest program per school":"Any field: school-level numbers"); FIELDOPTS.filter(o=>!S.find.group||o.grp===S.find.group).sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,o.label)); s.value=S.find.field; }
 (()=>{ const s=$("fGroup"); const add=(k,l)=>{const e=document.createElement("option");e.value=k;e.textContent=l;s.appendChild(e)};
   add("","All broad fields"); GROUPS.forEach(([g])=>add(g,`${g} (${FIELDOPTS.filter(o=>o.grp===g).length} fields)`));
   s.addEventListener("change",()=>{S.find.group=s.value; if(S.find.field&&!FIELDOPTS.some(o=>o.c===S.find.field&&(!S.find.group||o.grp===S.find.group)))S.find.field=""; fillFieldSel(); render();});
@@ -31991,40 +31991,48 @@ function findColor(all){
   return {fn:d=>{const v=acc(d); return v==null?NO:sc(v)},
     legend:`<span class="lsep">Colour = ${names}:</span>`+cols.map((c,i)=>`<span><i style="background:${c};border-radius:2px"></i>${labs[i]}</span>`).join("")+`<span><i style="background:${NO};border-radius:2px"></i>no value</span>`};
 }
-const baseCache=new Map();
-function findBase(field){
-  if(!baseCache.has(field)) baseCache.set(field, field
-    ? PROGBYFIELD.get(field).map(g=>Object.assign(Object.create(ROWBYID.get(g.u)),{E:g.e5,Dt:g.db,N:g.n}))
-    : rows.filter(d=>d.Grad_debt!=null&&d.Earnings_10yr!=null).map(d=>Object.assign(Object.create(d),{E:d.Earnings_10yr,Dt:d.Grad_debt})));
-  return baseCache.get(field);
+const baseCache=new Map(), progMode=f=>!!(f.field||f.group);
+function findBase(field,group){
+  const key=field?"f:"+field:group?"g:"+group:"";
+  if(!baseCache.has(key)){
+    let items;
+    if(field) items=PROGBYFIELD.get(field).map(g=>Object.assign(Object.create(ROWBYID.get(g.u)),{E:g.e5,Dt:g.db,N:g.n,c:g.c}));
+    else if(group){ // each school is represented by its largest program (most graduates a year; ties: lower CIP code) in the broad field
+      const best=new Map(), nz=v=>v==null?-1:v;
+      for(const g of PROGALL){ if(grpOf(g.c)!==group)continue; const cur=best.get(g.u); if(!cur||nz(g.n)>nz(cur.n)||(nz(g.n)===nz(cur.n)&&g.c<cur.c))best.set(g.u,g); }
+      items=[...best.values()].map(g=>Object.assign(Object.create(ROWBYID.get(g.u)),{E:g.e5,Dt:g.db,N:g.n,c:g.c}));
+    } else items=rows.filter(d=>d.Grad_debt!=null&&d.Earnings_10yr!=null).map(d=>Object.assign(Object.create(d),{E:d.Earnings_10yr,Dt:d.Grad_debt}));
+    baseCache.set(key,items);
+  }
+  return baseCache.get(key);
 }
 function findOther(f){ return d=>(!f.comp||(d.Completion_rate!=null&&d.Completion_rate>=f.comp))&&(f.net>=NETMAX||(d.Net_price!=null&&d.Net_price<=f.net)); }
 function findData(){
-  const f=S.find, inA=areaTest(f.area), base=findBase(f.field), all=f.acad?base:base.filter(d=>!d.Special), area=all.filter(inA), oth=findOther(f);
+  const f=S.find, inA=areaTest(f.area), base=findBase(f.field,f.group), all=f.acad?base:base.filter(d=>!d.Special), area=all.filter(inA), oth=findOther(f);
   const fits=area.filter(d=>d.Dt<=f.debt&&d.E>=f.earn&&oth(d));
   fits.sort(f.sort==="earn"?(a,b)=>b.E-a.E:(a,b)=>a.Dt-b.Dt||b.E-a.E);
   return {all,area,fits,inA,oth,nSpecial:base.filter(d=>d.Special&&inA(d)).length};
 }
 const pickSchool=d=>{S.focus=(S.focus===d.UNITID?null:d.UNITID); hideTip(); renderFind();};
-const findTip=d=>`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${S.find.field?`${esc(CIPN.get(S.find.field)||"")} program${d.N!=null?` (${d.N} grads/yr)`:""}<br>Earnings 5 yrs after completing: ${fm(d.E)}<br>Debt (loans at this school): ${fm(d.Dt)}`:`Typical earnings: ${fm(d.E)}<br>Median debt of graduates: ${fm(d.Dt)}`}${d.Completion_rate!=null?`<br>Completion rate: ${Math.round(d.Completion_rate)}%`:""}${d.Net_price!=null?`<br>Avg. net price: ${fm(d.Net_price)}`:""}<br><i>Click to follow this school</i>`;
+const findTip=d=>`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${progMode(S.find)?`${esc(CIPN.get(d.c)||"")} program${S.find.field?"":" (largest in the broad field)"}${d.N!=null?` (${d.N} grads/yr)`:""}<br>Earnings 5 yrs after completing: ${fm(d.E)}<br>Debt (loans at this school): ${fm(d.Dt)}`:`Typical earnings: ${fm(d.E)}<br>Median debt of graduates: ${fm(d.Dt)}`}${d.Completion_rate!=null?`<br>Completion rate: ${Math.round(d.Completion_rate)}%`:""}${d.Net_price!=null?`<br>Avg. net price: ${fm(d.Net_price)}`:""}<br><i>Click to follow this school</i>`;
 function renderFind(){
   const D=findData(),{area,fits,oth}=D,f=S.find,foc=S.focus!=null?rows.find(d=>d.UNITID===S.focus):null;
   $("fDebtOut").textContent=fm(f.debt); $("fEarnOut").textContent=fm(f.earn);
   $("fCompOut").textContent=f.comp?f.comp+"%":"any"; $("fNetOut").textContent=f.net>=NETMAX?"no limit":fm(f.net);
-  const fn=f.field?(CIPN.get(f.field)||f.field):"";
-  $("fDebtLab").textContent=f.field?"Max debt (this program's graduates)":"Max debt (median of graduates)";
-  $("fEarnLab").textContent=f.field?"Min earnings (program, 5 yrs after completing)":"Min earnings (typical, 10 yrs after entry)";
+  const fn=f.field?(CIPN.get(f.field)||f.field):f.group||"";
+  $("fDebtLab").textContent=progMode(f)?"Max debt (this program's graduates)":"Max debt (median of graduates)";
+  $("fEarnLab").textContent=progMode(f)?"Min earnings (program, 5 yrs after completing)":"Min earnings (typical, 10 yrs after entry)";
   $("fAcadLab").textContent=`Military and maritime academies (${D.nSpecial} in this view)`; $("fAcad").checked=f.acad; $("fOthers").checked=f.others;
   $("tF1").textContent="Schools that fit, best first"; $("tF2").textContent="Debt vs earnings: the fit zone"; $("tF3").textContent=`Where the fitting schools are (${areaName(f.area)})`;
   $("tF4").textContent=foc?`Percentile profile: ${foc.INSTNM}`:"Percentile profile: median school that fits";
-  INFO.F1="Pick an area, the most debt you accept and the earnings you want. Controls: area, broad field then field, and the colour of the dots (school type, net price, completion or earnings). A school fits if the median debt of its graduates is at or below your limit and its typical (median) earnings 10 years after entry are at or above your goal. These are medians for federally aided students at that school, not a prediction of what you would earn. Schools missing either number are left out. Field of study: choose a Bachelor's field and the debt and earnings change to that program's numbers at each school (earnings 5 years after completing, debt from loans taken at that school); only fields with at least 30 programs that have both numbers are offered, and the 10-year school numbers are not comparable with these. Completion rate and net price are school-wide, not per program; schools missing the value are left out when the limit is on (completion 'any' and net price 'no limit' switch them off). The academies box (the 9 military and maritime academies, found by name) lets you remove them, because their earnings and entry rules are unusual. Click a row to follow a school.";
+  INFO.F1="Pick an area, the most debt you accept and the earnings you want. Controls: area, broad field then field, and the colour of the dots (school type, net price, completion or earnings). A school fits if the median debt of its graduates is at or below your limit and its typical (median) earnings 10 years after entry are at or above your goal. These are medians for federally aided students at that school, not a prediction of what you would earn. Schools missing either number are left out. Broad field without a field: each school is represented by its largest program in that group (most graduates a year) that has both numbers, and the debt and earnings are that program's; the tooltip names the program. Field of study: choose a Bachelor's field and the debt and earnings change to that program's numbers at each school (earnings 5 years after completing, debt from loans taken at that school); only fields with at least 30 programs that have both numbers are offered, and the 10-year school numbers are not comparable with these. Completion rate and net price are school-wide, not per program; schools missing the value are left out when the limit is on (completion 'any' and net price 'no limit' switch them off). The academies box (the 9 military and maritime academies, found by name) lets you remove them, because their earnings and entry rules are unusual. Click a row to follow a school.";
   INFO.F2="Each dot is one school: coloured by school type inside your area, faint grey elsewhere. The shaded box is your fit zone, left of the debt limit and above the earnings goal; dots inside it are the schools that fit (the completion and net-price limits remove further dots from the fitting set but do not move the box). With a field chosen, each dot is that field's program at one school. Click a dot to follow that school.";
   INFO.F3="Large dots are the schools that fit (size = undergraduates, colour as chosen under 'Colour the dots by'; school type by default). Small grey dots are the other schools in the area; untick the grey-dots box to hide them. Only the 50 states and DC are drawn. Click a dot to follow that school.";
   INFO.F4="Where the chosen school ranks among all 1,944 schools on six school-wide measures (also when a field is chosen) (0 = lowest, 100 = highest); the blue band is the middle 50% of the schools that fit and the tick is their median. A high percentile is not always good (net price, debt). Below: the school's Bachelor's programs from the Field of Study data, largest first, with earnings 1 and 5 years after completing and debt. Programs with suppressed values show a dash.";
   refreshInfo();
   // list
   const host=$("findList"); host.innerHTML="";
-  $("sF1").textContent=`${d3.format(",")(fits.length)} of ${d3.format(",")(area.length)} schools in ${areaName(f.area)} fit (${f.field?"only schools with a "+fn+" program that has both a debt and an earnings value are counted":"only schools with both a debt and an earnings value are counted"})`;
+  $("sF1").textContent=`${d3.format(",")(fits.length)} of ${d3.format(",")(area.length)} schools in ${areaName(f.area)} fit (${progMode(f)?"only schools with "+(f.field?"a "+fn+" program":"a program in "+fn+" (the largest one counts)")+" that has both a debt and an earnings value are counted":"only schools with both a debt and an earnings value are counted"})`;
   if(fits.length>3)$("sF1").textContent+=`; the list shows the top ${f.all?Math.min(50,fits.length):3}`;
   if(!fits.length){ host.classList.remove("big");
     const nd=area.filter(d=>d.Dt<=f.debt+5000&&d.E>=f.earn&&oth(d)).length, ne=area.filter(d=>d.Dt<=f.debt&&d.E>=f.earn-5000&&oth(d)).length, no=area.filter(d=>d.Dt<=f.debt&&d.E>=f.earn).length;
@@ -32041,20 +32049,20 @@ function renderFind(){
   $("sF4").textContent=foc?"":"";
   const progs=foc?(PROG.get(foc.UNITID)||[]).slice().sort((a,b)=>(b.n??-1)-(a.n??-1)):[], dash=v=>v==null?"–":fm(v);
   $("findFields").innerHTML=!foc?`<small>Click a school in the list, the scatterplot or the map to see its profile and its programs.</small>`
-   :progs.length?`<b>${esc(foc.INSTNM)}</b>: Bachelor's programs with data (${progs.length}), largest first<div class="pscroll"><table class="ptab"><thead><tr><th>Field</th><th>Grads/yr</th><th>Earnings, 1 yr after</th><th>Earnings, 5 yrs after</th><th>Debt</th></tr></thead><tbody>`+progs.map(g=>`<tr${g.c===f.field?' class="sel"':""}><td>${esc(CIPN.get(g.c)||g.c)}</td><td>${g.n==null?"–":g.n}</td><td>${dash(g.e1)}</td><td>${dash(g.e5)}</td><td>${dash(g.db)}</td></tr>`).join("")+`</tbody></table></div><small>Medians for completers who were working and not enrolled (federally aided students only), 1 and 5 years after finishing; debt is from loans taken at this school. A dash means the value is suppressed for privacy. Cohort years are not stated in the data. These earnings are not comparable to the 10-year earnings above, which start at entry and include students who did not finish.</small>`
+   :progs.length?`<b>${esc(foc.INSTNM)}</b>: Bachelor's programs with data (${progs.length}), largest first<div class="pscroll"><table class="ptab"><thead><tr><th>Field</th><th>Grads/yr</th><th>Earnings, 1 yr after</th><th>Earnings, 5 yrs after</th><th>Debt</th></tr></thead><tbody>`+progs.map(g=>`<tr${(f.field?g.c===f.field:f.group&&grpOf(g.c)===f.group)?' class="sel"':""}><td>${esc(CIPN.get(g.c)||g.c)}</td><td>${g.n==null?"–":g.n}</td><td>${dash(g.e1)}</td><td>${dash(g.e5)}</td><td>${dash(g.db)}</td></tr>`).join("")+`</tbody></table></div><small>Medians for completers who were working and not enrolled (federally aided students only), 1 and 5 years after finishing; debt is from loans taken at this school. A dash means the value is suppressed for privacy. Cohort years are not stated in the data. These earnings are not comparable to the 10-year earnings above, which start at entry and include students who did not finish.</small>`
    :`<b>${esc(foc.INSTNM)}</b> has no Bachelor's program with published earnings or debt in the Field of Study data.${foc.Top_fields?`<br>It mostly teaches: ${esc(foc.Top_fields).replace(/ \| /g,", ")} (share of degrees).`:""}`;
 }
 function renderFindScatter({all,area,fits,inA},foc){
-  const host=$("findScatter"); host.innerHTML=""; $("lgF2").innerHTML=findColor(all).legend;
+  const host=$("findScatter"); host.innerHTML=""; $("lgF2").innerHTML=findColor(all).legend+`<span class="lsep">· larger dots = schools that fit your limits</span>`;
   const f=S.find,W=Math.max(host.clientWidth,260),H=370,m={l:64,r:14,t:8,b:44},iw=W-m.l-m.r,ih=H-m.t-m.b;
-  $("sF2").textContent=`${d3.format(",")(fits.length)} schools fit · ${f.field?"program medians for completers, federally aided students":"typical earnings are medians for federally aided students"}`;
+  $("sF2").textContent=`${d3.format(",")(fits.length)} schools fit · ${progMode(f)?"program medians for completers, federally aided students":"typical earnings are medians for federally aided students"}`;
   const x=d3.scaleLinear([0,d3.max(all,d=>d.Dt)],[0,iw]).nice(),y=d3.scaleLinear(d3.extent(all,d=>d.E),[ih,0]).nice();
   const svg=d3.select(host).append("svg").attr("width",W).attr("height",H),g=svg.append("g").attr("transform",`translate(${m.l},${m.t})`);
   g.append("g").attr("class","grid").call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""));
   g.append("g").attr("class","axis").attr("transform",`translate(0,${ih})`).call(d3.axisBottom(x).ticks(Math.max(3,iw/80)).tickFormat(d3.format("$~s")));
   g.append("g").attr("class","axis").call(d3.axisLeft(y).ticks(6).tickFormat(d3.format("$~s")));
-  svg.append("text").attr("x",m.l+iw/2).attr("y",H-6).attr("text-anchor","middle").text(f.field?"Median debt of the program's graduates ($)":"Median debt of graduates ($)");
-  svg.append("text").attr("transform",`translate(13,${m.t+ih/2}) rotate(-90)`).attr("text-anchor","middle").text(f.field?"Program earnings, 5 yrs after completing ($)":"Typical earnings, 10 yrs after entry ($)");
+  svg.append("text").attr("x",m.l+iw/2).attr("y",H-6).attr("text-anchor","middle").text(progMode(f)?"Median debt of the program's graduates ($)":"Median debt of graduates ($)");
+  svg.append("text").attr("transform",`translate(13,${m.t+ih/2}) rotate(-90)`).attr("text-anchor","middle").text(progMode(f)?"Program earnings, 5 yrs after completing ($)":"Typical earnings, 10 yrs after entry ($)");
   const zx=Math.min(x(f.debt),iw),zy=Math.max(0,y(f.earn));
   g.append("rect").attr("x",0).attr("y",0).attr("width",Math.max(0,zx)).attr("height",Math.max(0,Math.min(ih,zy))).attr("fill","var(--box-fill)").attr("fill-opacity",.3).attr("stroke","var(--box-stroke)").attr("stroke-dasharray","5 4");
   const fitSet=new Set(fits.map(d=>d.UNITID)),areaSet=new Set(area.map(d=>d.UNITID));
@@ -32080,7 +32088,7 @@ function renderFindMap({all,area,fits},foc){ $("lgF3").innerHTML=findColor(all).
   const svg=d3.select(host).append("svg").attr("width",W).attr("height",H).style("overflow","hidden");
   const inFeat=new Set(feats.map(g=>+g.id));
   svg.append("g").selectAll("path").data(states.features).join("path").attr("d",path).attr("fill","var(--sgrey)").attr("stroke","var(--panel)").attr("stroke-width",.8).attr("opacity",g=>inFeat.has(+g.id)?1:.45);
-  const fitSet=new Set(fits.map(d=>d.UNITID)),sz=d3.scaleSqrt().domain([100,30000]).range([3,9]).clamp(true),pts=[];
+  const fitSet=new Set(fits.map(d=>d.UNITID)),sz=d3.scaleSqrt().domain([100,30000]).range([3,9]).clamp(true),pts=[]; $("lgF3").innerHTML=FC.legend+sizeKey(sz,"undergraduate enrolment (students)");
   const pos=d=>d.LATITUDE!=null&&d.LONGITUDE!=null?proj([d.LONGITUDE,d.LATITUDE]):null;
   const dg=svg.append("g");
   for(const d of (S.find.others?area:[])){ if(fitSet.has(d.UNITID))continue; const p=pos(d); if(p)dg.append("circle").attr("cx",p[0]).attr("cy",p[1]).attr("r",1.8).attr("fill","var(--muted)").attr("fill-opacity",.35).style("pointer-events","none"); }
