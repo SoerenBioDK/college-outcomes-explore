@@ -6,10 +6,10 @@ Usage:  python3 data/add_group_columns.py <full Scorecard institution CSV> data/
 
 Adds (joined on UNITID; missing codes PrivacySuppressed / PS / NA / NULL / empty become empty):
   Earnings_10yr_inc_low / _inc_high   MD_EARN_WNE_INC1_P10 / MD_EARN_WNE_INC3_P10: median earnings 10 years after entry for students
-                                      from the lowest / highest third of family income ($)
+                                      with FAFSA family income of $30,000 or less / above $75,000 (fixed bands, not equal thirds of students; $)
   Repay5_pell / Repay5_nonpell        PELL_RPY_5YR_RT / NOPELL_RPY_5YR_RT: share of borrowers repaying (balance falling) 5 years after
                                       repayment starts, Pell vs non-Pell students (%, the Scorecard fraction x 100)
-  Repay5_inc_low / Repay5_inc_high    LO_INC_RPY_5YR_RT / HI_INC_RPY_5YR_RT: same, lowest vs highest family-income group (%)
+  Repay5_inc_low / Repay5_inc_high    LO_INC_RPY_5YR_RT / HI_INC_RPY_5YR_RT: same, family income $30,000 or less vs above $75,000 (%)
   Repay5_firstgen / Repay5_notfirstgen FIRSTGEN_RPY_5YR_RT / NOTFIRSTGEN_RPY_5YR_RT: first-generation vs other students (%)
 Federally aided students only. Safe to run twice (existing columns are overwritten with the same values).
 """
