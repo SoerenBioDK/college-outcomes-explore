@@ -477,12 +477,12 @@ function rkSetWeights(ws){ const t=d3.sum(ws); S.rank.cols.forEach((c,i)=>c.w=ws
 function rkLines(t,m){ if(m<4)return[]; const cut=s=>s.length>m?s.slice(0,m-1)+"…":s; if(t.length<=m)return[t]; const w=t.split(" "); let a=w[0],i=1; while(i<w.length&&(a+" "+w[i]).length<=m){a+=" "+w[i];i++} const b=w.slice(i).join(" "); return [cut(a),b?cut(b):""]; }
 function rkLayout(){
   const n=S.rank.cols.length,avail=Math.round($("rkWrap").clientWidth||900),nameX=60,nameW=180,barX=nameX+nameW+8,bw=110,scX=barX+bw+6,LW=scX+30,gap=30,cw=Math.max(100,Math.floor((avail-LW-RK_LBL)/n)),tw=cw-gap;
-  return {W:LW+n*cw+RK_LBL,nameX,nameW,barX,bw,scX,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
+  return {k:Math.min(1,avail/(LW+n*cw+RK_LBL)),W:LW+n*cw+RK_LBL,nameX,nameW,barX,bw,scX,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
 }
 function rkHistReal(k,b){ const s=rkStat(k),bins=Array(b).fill(0); for(const v of s.vals)bins[Math.min(b-1,Math.floor((v-s.lo)/((s.hi-s.lo)||1)*b))]++; return bins; }
 function rkLegend(){ $("lgRP").innerHTML=RK_TYPES.map(t=>`<span><b style="font-size:13px">${RK_GLYPH[t]}</b> ${t}</span>`).join(""); }
 function renderRankHeader(){
-  const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W).attr("height",RK_HH);
+  const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W*L.k).attr("height",RK_HH*L.k).attr("viewBox",`0 0 ${L.W} ${RK_HH}`); /* L.k < 1 on narrow windows: the whole figure is scaled down so it always fits and the school names stay visible */
   let g=svg.select("g.main"); if(g.empty())g=svg.append("g").attr("class","main");
   const lab=(cls,x,y,t,anchor,big)=>{let e=g.select("text."+cls); if(e.empty())e=g.append("text").attr("class",cls).style("fill",big?"var(--fg)":"var(--muted)").style("font-size",big?"14px":"11px").style("font-weight",big?700:600); e.attr("x",x).attr("y",y).attr("text-anchor",anchor||"start").text(t)};
   lab("ttl",4,16,TEXT.figure.headTitle,"start",true); lab("ttl2",4,31,TEXT.figure.headSub); lab("hrank",L.nameX-22,RK_HH-6,TEXT.figure.headRank,"end"); lab("hname",L.nameX,RK_HH-6,TEXT.figure.headSchool); lab("hbar",L.barX,RK_HH-6,TEXT.figure.headBars); lab("hsc",L.scX,RK_HH-6,TEXT.figure.headScore); g.select("text.hsc").selectAll("title").data([1]).join("title").text(TEXT.figure.headScoreTip);
@@ -541,7 +541,7 @@ function renderRankBody(){
   const lists=R.fig.map(c=>{ if(R.mode!=="all")return left.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos);
     const all=R.items.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos),t=all.slice(0,N),have=new Set(t.map(it=>it.d.UNITID)); return t.concat(all.filter(it=>pinned.has(it.d.UNITID)&&!have.has(it.d.UNITID))); });
   const rowsN=Math.max(1,left.length,...lists.map(l=>l.length)),H=rowsN*RH+6,P0=new Map(left.map((it,i)=>[it.d.UNITID,i])),P=lists.map(l=>new Map(l.map((it,i)=>[it.d.UNITID,i])));
-  svg.attr("width",L.W).attr("height",H).attr("aria-label",`Ranking of ${left.length} schools on the left. To the right, one column per variable shows the same ${R.mode==="all"?"top schools of all ranked schools":"schools"} sorted by that variable, with bars in real values.`);
+  svg.attr("width",L.W*L.k).attr("height",H*L.k).attr("viewBox",`0 0 ${L.W} ${H}`).attr("aria-label",`Ranking of ${left.length} schools on the left. To the right, one column per variable shows the same ${R.mode==="all"?"top schools of all ranked schools":"schools"} sorted by that variable, with bars in real values.`);
   for(const c of ["links","med","cells","left","sep"])if(svg.select("g."+c).empty())svg.append("g").attr("class",c);
   const anim=R.animate&&!reduced; R.animate=false; const T=s=>anim?s.transition().duration(380):s;
   // curves between consecutive columns
