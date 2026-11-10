@@ -64,6 +64,8 @@ input[type=range]{width:150px;accent-color:var(--accent)}
 #findFields .pscroll{max-height:250px;overflow-y:auto;margin-top:4px}
 .fnote{font-size:13px;line-height:1.5;margin:4px 0 0}.fnote small{color:var(--muted);display:block}
 .panel.wide{grid-column:1/-1}
+.rkctl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.rkwrap{overflow-x:auto;border-top:1px solid var(--line)}.rkbody{height:520px;overflow-y:auto;overflow-x:hidden;border-bottom:1px solid var(--line)}#rkHead,#rkSvg{display:block}
 .fctl2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px;align-items:end}.fctl2 select{max-width:100%}.fctl2 input[type=range],#gridFind .panel.wide>.field input[type=range]{width:100%}
 .crit{gap:8px;padding:10px 12px}.fctl2.c4{grid-template-columns:repeat(4,minmax(0,1fr))}.fctl2 .field label{font-size:11.5px;line-height:1.25}.frow3{display:flex;gap:6px 22px;flex-wrap:wrap;align-items:center}
 @media(max-width:900px){.fctl2.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -109,7 +111,7 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
 <header>
   <h1>College Outcomes Explorer</h1>
 </header>
-<nav class="tabs" role="tablist" aria-label="Views"><button type="button" role="tab" id="tabExplore" aria-selected="true" aria-controls="gridExplore">Explore</button><button type="button" role="tab" id="tabWhom" aria-selected="false" aria-controls="gridWhom">For whom?</button><button type="button" role="tab" id="tabFind" aria-selected="false" aria-controls="gridFind">Find a school</button></nav>
+<nav class="tabs" role="tablist" aria-label="Views"><button type="button" role="tab" id="tabExplore" aria-selected="true" aria-controls="gridExplore">Explore</button><button type="button" role="tab" id="tabWhom" aria-selected="false" aria-controls="gridWhom">For whom?</button><button type="button" role="tab" id="tabFind" aria-selected="false" aria-controls="gridFind">Find a school</button><button type="button" role="tab" id="tabRank" aria-selected="false" aria-controls="gridRank">Rank schools</button></nav>
 
 <section class="controls" id="controls" aria-label="Controls" data-view="explore whom">
   <div class="cgroup" data-view="explore"><h2>What to show</h2>
@@ -163,6 +165,19 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
   <section class="panel" aria-label="Debt versus earnings"><h3 id="tF2"></h3><p class="sub" id="sF2"></p><div class="legend" id="lgF2"></div><div class="body" id="findScatter"></div></section>
   <section class="panel" aria-label="Schools that fit"><h3 id="tF1"></h3><p class="sub" id="sF1"></p><div class="body" id="findList"></div></section>
   <section class="panel" aria-label="Profile of the chosen school"><h3 id="tF4"></h3><p class="sub" id="sF4"></p><div class="body" id="findProfile"></div><div class="fnote" id="findFields"></div></section>
+</div>
+<div class="grid" id="gridRank" hidden>
+  <section class="panel wide" aria-label="Rank schools">
+    <h3 id="tR"></h3><p class="sub" id="sR"></p>
+    <div class="rkctl">
+      <div class="field"><label for="rkAdd">Columns</label><select id="rkAdd"></select></div>
+      <div class="field"><label for="rkType">School type</label><select id="rkType"></select></div>
+      <div class="field"><label for="rkQ">Search a school</label><input type="text" id="rkQ" placeholder="e.g. Stanford" autocomplete="off"></div>
+      <button type="button" id="rkReset">Equal weights</button><button type="button" id="rkFreeze">Freeze this ranking</button><button type="button" id="rkClear">Clear filters</button>
+    </div>
+    <div class="legend" id="rkLg"><span>Slope lines, compared with the frozen ranking:</span><span><i style="background:#2166ac"></i>ranked higher now</span><span><i style="background:#b2182b"></i>ranked lower now</span><span><i style="background:#bdbdbd"></i>same rank</span></div>
+    <div class="rkwrap" id="rkWrap"><svg id="rkHead" role="img" aria-label="Column headers: weights, histograms and filters"></svg><div class="rkbody" id="rkBody"><svg id="rkSvg" role="img" aria-label="Ranked list of schools with stacked score bars"></svg></div></div>
+  </section>
 </div>
 </div>
 <div class="tip" id="tip"></div>
@@ -31561,14 +31576,14 @@ const hideTip=()=>{tip.style.opacity=0};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 let raf=0; const later=fn=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fn)};
 /* ---------- (i) buttons: explanations live in a pop-up so the charts are not buried in text ---------- */
-const INFO={A:"",B:"",C:"",D:"",E:"",F1:"",F2:"",F3:"",F4:""}; let infoOpen=null;
+const INFO={R:"",A:"",B:"",C:"",D:"",E:"",F1:"",F2:"",F3:"",F4:""}; let infoOpen=null;
 const pop=document.createElement("div"); pop.id="infoPop"; pop.setAttribute("role","dialog"); document.body.appendChild(pop);
 function placePop(){ if(!infoOpen)return; const r=infoOpen.btn.getBoundingClientRect(); pop.style.display="block"; pop.textContent=INFO[infoOpen.k];
   const w=pop.offsetWidth,h=pop.offsetHeight; pop.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+"px";
   pop.style.top=Math.max(8,(r.bottom+6+h>innerHeight-8)?r.top-h-6:r.bottom+6)+"px"; } // opens below the (i), or above it when there is no room
 function closeInfo(){ if(infoOpen){infoOpen.btn.setAttribute("aria-expanded","false"); infoOpen=null;} pop.style.display="none"; }
 function refreshInfo(){ if(infoOpen)placePop(); }
-["A","B","C","D","E","F1","F2","F3","F4"].forEach(k=>{ const h=$("t"+k), w=document.createElement("div"); w.className="hrow"; h.parentNode.insertBefore(w,h); w.appendChild(h);
+["A","B","C","D","E","F1","F2","F3","F4","R"].forEach(k=>{ const h=$("t"+k), w=document.createElement("div"); w.className="hrow"; h.parentNode.insertBefore(w,h); w.appendChild(h);
   const b=document.createElement("button"); b.type="button"; b.className="info"; b.textContent="i"; b.setAttribute("aria-label","About this chart: how to read it and use it"); b.setAttribute("aria-expanded","false"); w.appendChild(b);
   b.addEventListener("click",e=>{ e.stopPropagation(); const same=infoOpen&&infoOpen.k===k; closeInfo(); if(!same){infoOpen={k,btn:b}; b.setAttribute("aria-expanded","true"); placePop();} }); });
 document.addEventListener("click",e=>{ if(infoOpen&&!pop.contains(e.target))closeInfo(); });
@@ -32097,16 +32112,180 @@ function renderFindMap({all,area,fits},foc){ $("lgF3").innerHTML=findColor(all).
     .on("click",function(e){const [px,py]=d3.pointer(e,this),o=qt.find(px,py,10); if(o)pickSchool(o.d);});
 }
 
+/* ---------- rank schools (LineUp-style) ---------- */
+const RK_ATTRS=[
+ ["Earnings_10yr","Earnings 10 yrs","Median earnings, 10 yrs after entry",1,"$"],
+ ["Earnings_6yr","Earnings 6 yrs","Median earnings, 6 yrs after entry",1,"$"],
+ ["Above_threshold_10yr","Beats HS grad","% earning more than a high-school graduate, 10 yrs",1,"%"],
+ ["Completion_rate","Completion","Completion rate",1,"%"],
+ ["Retention_rate","Retention","First-year retention rate",1,"%"],
+ ["Grad_debt","Grad debt","Median debt of graduates",-1,"$"],
+ ["Net_price","Net price","Average net price per year",-1,"$"],
+ ["Cost_of_attendance","Cost of att.","Cost of attendance per year",-1,"$"],
+ ["Tuition_in_state","Tuition","Tuition and fees (in-district/in-state)",-1,"$"],
+ ["Default_2yr","Default rate","Loan default rate, 2 yrs after repayment starts (about half of schools)",-1,"%"],
+ ["Pell_share","Pell share","% of students with Pell grants (access)",1,"%"],
+ ["Lowincome_share","Low-income share","% of first-time students from families under $48k (access)",1,"%"],
+ ["Repay5_pell","Repay 5y, Pell","Repayment rate 5 yrs, Pell students",1,"%"],
+ ["Repay5_inc_low","Repay 5y, low inc.","Repayment rate 5 yrs, family income $30k or less",1,"%"],
+ ["Earnings_10yr_inc_low","Earnings, low inc.","Median earnings 10 yrs, family income $30k or less",1,"$"],
+ ["Net_price_highest_income","Net price, high inc.","Net price, family income over $110k",-1,"$"],
+ ["Faculty_salary_month","Faculty salary","Average faculty salary per month",1,"$"],
+ ["Instruction_spend_log10","Instruction spend","Instruction spending per student (log10 $)",1,"n"],
+ ["Admission_rate","Admission rate","Admission rate (lower = more selective)",-1,"%"],
+ ["SAT_avg","SAT average","Average SAT score (selective schools only)",1,"n"]];
+const RKA=new Map(RK_ATTRS.map(a=>[a[0],{k:a[0],short:a[1],long:a[2],dir:a[3],f:a[4]}]));
+const RK_COL=d3.schemeSet2; // ColorBrewer Set2 (up to 8 columns)
+const rkFmt=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(",")(Math.round(v)):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
+const rkStats=new Map(); // lo/hi/histogram source per attribute over all schools with a value
+function rkStat(k){ if(!rkStats.has(k)){const v=rows.map(d=>d[k]).filter(x=>x!=null); rkStats.set(k,{lo:d3.min(v),hi:d3.max(v),vals:v});} return rkStats.get(k); }
+const rkNorm=(c,v)=>{const s=rkStat(c.k),g=(v-s.lo)/((s.hi-s.lo)||1); return c.dir>0?g:1-g};
+const RK_H=20, RK_BODY=520;
+S.rank={cols:["Earnings_10yr","Completion_rate","Retention_rate","Net_price","Grad_debt"].map((k,i)=>({k,w:.2,dir:RKA.get(k).dir,color:RK_COL[i]})),type:"All",q:"",ranges:{},items:[],snap:null,scroll:0};
+function rkCompute(){
+  const R=S.rank,cols=R.cols,q=R.q.trim().toLowerCase();
+  const items=[];
+  for(const d of rows){
+    if(R.type!=="All"&&d.Control!==R.type)continue; if(q&&!d.INSTNM.toLowerCase().includes(q))continue;
+    let ok=true; for(const c of cols){const v=d[c.k]; if(v==null){ok=false;break} const r=R.ranges[c.k]; if(r&&(v<r[0]||v>r[1])){ok=false;break}}
+    if(!ok)continue;
+    const parts=cols.map(c=>c.w*rkNorm(c,d[c.k])); items.push({d,parts,score:d3.sum(parts)});
+  }
+  items.sort((a,b)=>b.score-a.score||a.d.INSTNM.localeCompare(b.d.INSTNM));
+  let last=null,lr=0; items.forEach((it,i)=>{const sc=Math.round(it.score*1e6); if(sc!==last){lr=i+1;last=sc} it.rank=lr; it.pos=i});
+  R.items=items;
+}
+function rkFreeze(){
+  const R=S.rank; R.snap={cols:R.cols.map(c=>({...c})),items:R.items.map(it=>({id:it.d.UNITID,name:it.d.INSTNM,rank:it.rank,score:it.score,parts:it.parts,pos:it.pos})),idx:new Map(R.items.map((it,i)=>[it.d.UNITID,i]))};
+}
+function rkSetWeights(ws){ const t=d3.sum(ws); S.rank.cols.forEach((c,i)=>c.w=ws[i]/t); }
+function rkLayout(){
+  const wrapW=Math.max(960,Math.round($("rkWrap").clientWidth||1300));
+  const nameX=40,nameW=190,barX=nameX+nameW+6,slopeW=96,rankW2=34,nameW2=150;
+  const avail=wrapW-barX-slopeW-(rankW2+4+nameW2+4)-34;
+  const bw=Math.max(240,Math.round(avail*.6)), sbw=Math.max(150,Math.round(avail*.4));
+  const slopeX=barX+bw+40, rX=slopeX+slopeW, rnameX=rX+rankW2+4, sbarX=rnameX+nameW2+4;
+  return {W:Math.max(wrapW,sbarX+sbw+40),nameX,nameW,barX,bw,slopeX,slopeW,rX,rnameX,nameW2,sbarX,sbw};
+}
+function rkHist(c){ const s=rkStat(c.k),b=12,bins=Array(b).fill(0); for(const v of s.vals){let g=(v-s.lo)/((s.hi-s.lo)||1); if(c.dir<0)g=1-g; bins[Math.min(b-1,Math.floor(g*b))]++} return bins; }
+function rkRangeToPx(c,L,x0,w){ const r=S.rank.ranges[c.k]; if(!r)return null; const s=rkStat(c.k),g=r.map(v=>{const t=(v-s.lo)/((s.hi-s.lo)||1);return c.dir>0?t:1-t}).sort((a,b)=>a-b); return [x0+g[0]*w,x0+g[1]*w]; }
+function rkPxToRange(c,px,x0,w){ const s=rkStat(c.k),g=px.map(p=>Math.max(0,Math.min(1,(p-x0)/w))),r=g.map(t=>c.dir>0?s.lo+t*(s.hi-s.lo):s.hi-t*(s.hi-s.lo)); return r.sort((a,b)=>a-b); }
+let rkBusy=false;
+function renderRankHeader(){
+  const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W).attr("height",114);
+  let g=svg.select("g.main"); if(g.empty())g=svg.append("g").attr("class","main");
+  // static labels
+  const lab=(cls,x,y,t,anchor)=>{let e=g.select("text."+cls); if(e.empty())e=g.append("text").attr("class",cls).attr("fill","var(--muted)").style("font-size","11px").style("font-weight",600); e.attr("x",x).attr("y",y).attr("text-anchor",anchor||"start").text(t)};
+  lab("hrank",L.nameX-6,110,"Rank","end"); lab("hname",L.nameX,110,"School"); lab("hrank2",L.rX+34,110,"Rank","end"); lab("hname2",L.rnameX,110,"Frozen ranking");
+  let x=L.barX; const xs=R.cols.map(c=>{const o={c,x,w:c.w*L.bw}; x+=o.w; return o});
+  // segments
+  const segs=g.selectAll("g.seg").data(xs,o=>o.c.k).join(e=>{const s=e.append("g").attr("class","seg"); s.append("rect").attr("class","bg"); s.append("g").attr("class","bars"); s.append("g").attr("class","brush"); s.append("rect").attr("class","top").attr("height",5);
+      s.append("text").attr("class","nm").attr("y",21).style("font-size","11px").style("font-weight",600).attr("fill","var(--fg)");
+      s.append("g").attr("class","dirb").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","11px").attr("fill","var(--fg)");
+      s.append("g").attr("class","rm").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","11px").attr("fill","var(--muted)").text("✕");
+      return s});
+  segs.each(function(o){
+    const s=d3.select(this),c=o.c,hx=o.x+1,hw=Math.max(2,o.w-2);
+    s.select("rect.bg").attr("x",o.x).attr("y",40).attr("width",o.w).attr("height",56).attr("fill","var(--soft)").attr("stroke","var(--panel)");
+    s.select("rect.top").attr("x",o.x).attr("y",0).attr("width",o.w).attr("fill",c.color).attr("stroke","var(--panel)");
+    const bins=rkHist(c),mx=d3.max(bins)||1,bw=hw/bins.length;
+    s.select("g.bars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>hx+i*bw).attr("width",Math.max(.5,bw-1)).attr("y",d=>94-(d/mx)*48).attr("height",d=>(d/mx)*48).attr("fill",c.color).attr("fill-opacity",.9);
+    s.select("text.nm").attr("x",o.x+4).text(()=>{const t=RKA.get(c.k).short,m=Math.floor((o.w-24)/6.4); return m<4?"":t.length>m?t.slice(0,m-1)+"…":t});
+    s.select("g.dirb").attr("transform",`translate(${o.x+4},34)`).attr("aria-label",`${RKA.get(c.k).short}: ${c.dir>0?"higher":"lower"} is better. Press to flip.`).select("text").text(c.dir>0?"↑ higher":"↓ lower").style("display",o.w<64?"none":null);
+    s.select("g.rm").attr("transform",`translate(${o.x+o.w-14},21)`).attr("aria-label",`Remove column ${RKA.get(c.k).short}`).style("display",R.cols.length<2||o.w<30?"none":null).select("text").text("✕");
+    s.select("g.dirb").on("click",()=>{c.dir=-c.dir;delete R.ranges[c.k];rkUpdate(true)}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;delete R.ranges[c.k];rkUpdate(true)}});
+    s.select("g.rm").on("click",()=>rkRemove(c.k)).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();rkRemove(c.k)}});
+    s.select("title").remove(); s.append("title").text(`${RKA.get(c.k).long}. Weight ${Math.round(c.w*100)}%. Drag on the histogram to keep only schools in that range.`);
+    // brush
+    const br=d3.brushX().extent([[hx,40],[hx+hw,96]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=rkPxToRange(c,e.selection,hx,hw); rkUpdate(false); });
+    const bg=s.select("g.brush"); bg.call(br); const px=rkRangeToPx(c,L,hx,hw); bg.call(br.move,px);
+  });
+  // dividers
+  const divs=xs.slice(0,-1).map((o,i)=>({i,x:o.x+o.w,k:o.c.k,k2:xs[i+1].c.k}));
+  g.selectAll("rect.div").data(divs,d=>d.k+d.k2).join("rect").attr("class","div").attr("y",0).attr("width",9).attr("height",96).attr("x",d=>d.x-4.5).attr("fill","var(--fg)").attr("fill-opacity",0).attr("tabindex",0).attr("role","slider")
+    .attr("aria-label",d=>`Weight divider between ${RKA.get(d.k).short} and ${RKA.get(d.k2).short}`).attr("aria-valuemin",0).attr("aria-valuemax",100).attr("aria-valuenow",d=>Math.round(R.cols[d.i].w*100)).style("cursor","col-resize")
+    .on("mouseenter",function(){d3.select(this).attr("fill-opacity",.25)}).on("mouseleave",function(){d3.select(this).attr("fill-opacity",0)})
+    .on("keydown",(e,d)=>{ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return; e.preventDefault(); rkShift(d.i,(e.key==="ArrowRight"?1:-1)*.02); })
+    .call(d3.drag().on("drag",(e,d)=>rkShift(d.i,e.dx/rkLayout().bw)));
+  // frozen header
+  const sn=R.snap; const sx=sn?(()=>{let x=L.sbarX;return sn.cols.map(c=>{const o={c,x,w:c.w*L.sbw};x+=o.w;return o})})():[];
+  g.selectAll("g.fz").data(sx,o=>o.c.k).join(e=>{const s=e.append("g").attr("class","fz"); s.append("rect").attr("height",18); s.append("text").attr("y",13).style("font-size","10.5px").attr("fill","var(--fg)"); return s})
+    .each(function(o){const s=d3.select(this); s.select("rect").attr("x",o.x).attr("y",78).attr("width",o.w).attr("fill",o.c.color).attr("stroke","var(--panel)"); s.select("text").attr("x",o.x+3).attr("y",91).text(o.w<50?"":RKA.get(o.c.k).short)});
+  g.select("text.fzsub").remove(); g.append("text").attr("class","fzsub").attr("x",L.sbarX).attr("y",110).style("font-size","11px").attr("fill","var(--muted)").text(sn?`${sn.items.length.toLocaleString("en-US")} schools`:"");
+  g.select("text.curlab").remove(); g.append("text").attr("class","curlab").attr("x",L.barX).attr("y",110).style("font-size","11px").attr("fill","var(--muted)").text("Segment width = weight; drag a divider");
+}
+function rkShift(i,dw){ const cs=S.rank.cols,a=cs[i],b=cs[i+1],m=.02; dw=Math.max(m-a.w,Math.min(b.w-m,dw)); a.w+=dw; b.w-=dw; rkUpdate(true,true); }
+function rkRemove(k){ const R=S.rank; if(R.cols.length<2)return; const i=R.cols.findIndex(c=>c.k===k); R.cols.splice(i,1); delete R.ranges[k]; rkSetWeights(R.cols.map(c=>c.w)); rkUpdate(true); rkFillAdd(); }
+function rkFillAdd(){ const s=$("rkAdd"),used=new Set(S.rank.cols.map(c=>c.k)); s.innerHTML=""; const o0=document.createElement("option"); o0.value=""; o0.textContent=S.rank.cols.length>=8?"(8 columns is the maximum)":"Add a column…"; s.appendChild(o0);
+  if(S.rank.cols.length<8)RK_ATTRS.filter(a=>!used.has(a[0])).forEach(a=>{const o=document.createElement("option");o.value=a[0];o.textContent=`${a[1]} (${a[3]>0?"higher":"lower"} = better)`;s.appendChild(o)}); s.value=""; }
+function rkAdd(k){ const R=S.rank; if(!k||R.cols.length>=8)return; const used=new Set(R.cols.map(c=>c.color)),color=RK_COL.find(c=>!used.has(c))||RK_COL[0],n=R.cols.length; R.cols.forEach(c=>c.w*=n/(n+1)); R.cols.push({k,w:1/(n+1),dir:RKA.get(k).dir,color}); rkUpdate(true); rkFillAdd(); }
+function rkUpdate(header,fromDrag){ rkCompute(); if(header)renderRankHeader(); renderRankBody(); rkCount(); }
+function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0);
+  $("sR").textContent=`${n.toLocaleString("en-US")} of ${rows.length.toLocaleString("en-US")} schools are ranked: only schools with all ${R.cols.length} chosen values${f?" that also pass your filters":""} are included, and ranks are counted among them.`; }
+function renderRankBody(){
+  const R=S.rank,L=rkLayout(),box=$("rkBody"),sn=R.snap,N=Math.max(R.items.length,sn?sn.items.length:0);
+  const svg=d3.select("#rkSvg").attr("width",L.W).attr("height",Math.max(N,1)*RK_H+6);
+  const top=box.scrollTop,start=Math.max(0,Math.floor(top/RK_H)-3),end=Math.min(N,Math.ceil((top+RK_BODY)/RK_H)+3);
+  const cur=R.items.slice(start,end),fro=sn?sn.items.slice(start,Math.min(end,sn.items.length)):[],foc=S.focus;
+  // current rows
+  const rg=svg.selectAll("g.row").data(cur,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row"); g.append("rect").attr("class","hit").attr("height",RK_H); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)"); g.append("text").attr("class","nmx").style("font-size","12.5px"); g.append("g").attr("class","stack"); g.append("text").attr("class","sc").style("font-size","11px").style("font-family","var(--mono)").attr("fill","var(--muted)"); return g});
+  rg.attr("transform",it=>`translate(0,${it.pos*RK_H})`);
+  rg.select("rect.hit").attr("x",2).attr("y",0).attr("width",L.barX+L.bw+34).attr("fill",it=>it.d.UNITID===foc?"var(--soft)":"transparent").attr("stroke",it=>it.d.UNITID===foc?"var(--median)":"none").style("cursor","pointer");
+  rg.select("text.rk").attr("x",L.nameX-6).attr("y",14).attr("fill","var(--muted)").text(it=>it.rank);
+  rg.select("text.nmx").attr("x",L.nameX).attr("y",14).attr("fill","var(--fg)").style("font-weight",it=>it.d.UNITID===foc?700:400).text(it=>{const m=Math.floor(L.nameW/6.6);return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
+  rg.each(function(it){ const sg=d3.select(this).select("g.stack"); let x=L.barX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.bw,c:R.cols[i]};x+=o.w;return o});
+    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",3).attr("height",RK_H-6).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("stroke","var(--panel)").attr("stroke-width",.6);
+    d3.select(this).select("text.sc").attr("x",x+5).attr("y",14).text(Math.round(it.score*100)); });
+  rg.on("mousemove",function(e,it){ const [px]=d3.pointer(e,svg.node()); let x=L.barX,idx=-1; for(let i=0;i<it.parts.length;i++){const w=it.parts[i]*L.bw; if(px>=x&&px<x+w){idx=i;break} x+=w}
+      const d=it.d,cs=R.cols; let html=`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>Rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100`;
+      if(idx>=0){const c=cs[idx]; html+=`<br><b>${esc(RKA.get(c.k).short)}</b>: ${rkFmt(c.k,d[c.k])} → ${(rkNorm(c,d[c.k])*100).toFixed(0)}/100 × weight ${Math.round(c.w*100)}% = ${(it.parts[idx]*100).toFixed(1)} points`;}
+      else html+="<br>"+cs.map(c=>`${esc(RKA.get(c.k).short)}: ${rkFmt(c.k,d[c.k])}`).join("<br>"); html+=`<br><i>Click to follow this school</i>`; showTip(e,html);})
+    .on("mouseleave",hideTip).on("click",(e,it)=>{S.focus=S.focus===it.d.UNITID?null:it.d.UNITID; renderRankBody();});
+  // frozen rows
+  const fg=svg.selectAll("g.frow").data(fro,it=>it.id).join(e=>{const g=e.append("g").attr("class","frow"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").attr("fill","var(--muted)"); g.append("text").attr("class","nmx").style("font-size","12px"); g.append("g").attr("class","stack"); return g});
+  fg.attr("transform",it=>`translate(0,${it.pos*RK_H})`); fg.select("text.rk").attr("x",L.rX+34).attr("y",14).text(it=>it.rank);
+  fg.select("text.nmx").attr("x",L.rnameX).attr("y",14).attr("fill","var(--fg)").style("font-weight",it=>it.id===foc?700:400).text(it=>{const m=Math.floor(L.nameW2/6.2);return it.name.length>m?it.name.slice(0,m-1)+"…":it.name});
+  fg.each(function(it){ let x=L.sbarX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.sbw,c:sn.cols[i]};x+=o.w;return o});
+    d3.select(this).select("g.stack").selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",3).attr("height",RK_H-6).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("fill-opacity",.85).attr("stroke","var(--panel)").attr("stroke-width",.6)});
+  fg.on("mousemove",(e,it)=>showTip(e,`<b>${esc(it.name)}</b><br>Frozen rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100`)).on("mouseleave",hideTip);
+  // slope lines
+  const idxNow=new Map(R.items.map((it,i)=>[it.d.UNITID,i])),vis=new Set(); cur.forEach(it=>vis.add(it.d.UNITID)); fro.forEach(it=>vis.add(it.id));
+  const lines=[]; if(sn)for(const id of vis){const i=idxNow.get(id),j=sn.idx.get(id); if(i!=null&&j!=null)lines.push({id,i,j,dr:sn.items[j].rank-R.items[i].rank})}
+  svg.selectAll("path.slope").data(lines,l=>l.id).join("path").attr("class","slope").attr("fill","none").style("pointer-events","none")
+    .attr("d",l=>`M${L.barX+L.bw+36},${l.i*RK_H+RK_H/2}C${L.slopeX+L.slopeW*.5},${l.i*RK_H+RK_H/2} ${L.slopeX+L.slopeW*.5},${l.j*RK_H+RK_H/2} ${L.rX-2},${l.j*RK_H+RK_H/2}`)
+    .attr("stroke",l=>l.dr>0?"#2166ac":l.dr<0?"#b2182b":"#bdbdbd").attr("stroke-opacity",l=>l.id===foc?1:.55).attr("stroke-width",l=>l.id===foc?3:1.2);
+  svg.selectAll("path.slope").filter(l=>l.id===foc).raise();
+  // legend of the slope graph in the sub line
+}
+function rkSetup(){
+  fillSelect("rkType",[["All","All school types"],["Public","Public"],["Private nonprofit","Private nonprofit"],["Private for-profit","Private for-profit"]],"All",v=>{S.rank.type=v; rkUpdate(false)});
+  $("rkAdd").addEventListener("change",e=>rkAdd(e.target.value));
+  $("rkFreeze").addEventListener("click",()=>{rkFreeze();renderRankHeader();renderRankBody()});
+  $("rkReset").addEventListener("click",()=>{const n=S.rank.cols.length; S.rank.cols.forEach(c=>c.w=1/n); rkUpdate(true)});
+  $("rkClear").addEventListener("click",()=>{S.rank.ranges={}; S.rank.q=""; S.rank.type="All"; $("rkQ").value=""; $("rkType").value="All"; rkUpdate(true)});
+  $("rkQ").addEventListener("input",e=>{S.rank.q=e.target.value; later(()=>rkUpdate(false))});
+  $("rkBody").addEventListener("scroll",()=>later(renderRankBody),{passive:true});
+  rkFillAdd();
+}
+function renderRank(){
+  if(!S.rank.items.length&&!S.rank.snap){rkCompute(); rkFreeze();}
+  else rkCompute();
+  $("tR").textContent="Rank schools: build your own ranking and compare it with a frozen one";
+  INFO.R="Each row is a school. The coloured bar is its score: every column adds points, and a column's width in the header is its weight (the five start equal). Drag the divider between two columns to move weight from one to the other, flip ↑/↓ if lower values should count as better (for example net price, debt), or add and remove columns. Each value is first rescaled from 0 (the lowest value among all schools) to 100 (the highest), so a column's points = weight × rescaled value; the rescaling is a simple min–max, so a few extreme schools stretch it. Histograms in the headers show how the schools are spread on that column (left = worse, right = better); drag on one to keep only schools in that range. Only schools with all chosen values are ranked, so choosing a sparse column (default rate, SAT) shrinks the list. 'Freeze this ranking' saves the current order on the right; change the weights and the lines show how schools move (blue = now ranked higher than in the frozen ranking, red = lower). This is not an official ranking: the weights are your choice, the data cover students who received federal aid, and the order can change a lot with the weights. Idea and layout after LineUp (Gratzl et al., 2013).";
+  rkFillAdd(); renderRankHeader(); renderRankBody(); rkCount();
+}
+rkSetup();
+
 /* ---------- two views (tabs) ---------- */
 function setView(v){
   S.view=v; closeInfo();
-  $("gridExplore").hidden=v!=="explore"; $("gridWhom").hidden=v!=="whom"; $("gridFind").hidden=v!=="find";
-  $("tabExplore").setAttribute("aria-selected",v==="explore"); $("tabWhom").setAttribute("aria-selected",v==="whom"); $("tabFind").setAttribute("aria-selected",v==="find");
+  $("gridExplore").hidden=v!=="explore"; $("gridWhom").hidden=v!=="whom"; $("gridFind").hidden=v!=="find"; $("gridRank").hidden=v!=="rank";
+  $("tabExplore").setAttribute("aria-selected",v==="explore"); $("tabWhom").setAttribute("aria-selected",v==="whom"); $("tabFind").setAttribute("aria-selected",v==="find"); $("tabRank").setAttribute("aria-selected",v==="rank");
   document.querySelectorAll("[data-view]").forEach(e=>e.hidden=!e.dataset.view.split(" ").includes(v));
   render();
 }
-$("tabExplore").addEventListener("click",()=>setView("explore")); $("tabWhom").addEventListener("click",()=>setView("whom")); $("tabFind").addEventListener("click",()=>setView("find"));
-document.querySelector(".tabs").addEventListener("keydown",e=>{ if(e.key==="ArrowRight"||e.key==="ArrowLeft"){ const V=["explore","whom","find"],t=V[(V.indexOf(S.view)+(e.key==="ArrowRight"?1:2))%3]; setView(t); $({explore:"tabExplore",whom:"tabWhom",find:"tabFind"}[t]).focus(); } });
+$("tabExplore").addEventListener("click",()=>setView("explore")); $("tabWhom").addEventListener("click",()=>setView("whom")); $("tabFind").addEventListener("click",()=>setView("find")); $("tabRank").addEventListener("click",()=>setView("rank"));
+document.querySelector(".tabs").addEventListener("keydown",e=>{ if(e.key==="ArrowRight"||e.key==="ArrowLeft"){ const V=["explore","whom","find","rank"],t=V[(V.indexOf(S.view)+(e.key==="ArrowRight"?1:3))%4]; setView(t); $({explore:"tabExplore",whom:"tabWhom",find:"tabFind",rank:"tabRank"}[t]).focus(); } });
 
 /* ---------- orchestration ---------- */
 function titles(){
@@ -32122,6 +32301,7 @@ function titles(){
   refreshInfo();
 }
 function renderLinked(){
+  if(S.view==="rank"){renderRank();return}
   if(S.view==="find"){renderFind();return}
   if(S.view==="whom"){renderWhom(baseRows(true));return}
   const base=baseRows(),filtered=base.filter(fullOK);
@@ -32129,6 +32309,7 @@ function renderLinked(){
 }
 function render(){
   hideTip();
+  if(S.view==="rank"){renderRank();return}
   if(S.view==="find"){renderFind();return}
   if(S.view==="whom"){titles();renderWhom(baseRows(true));return}
   const base=baseRows(),filtered=base.filter(fullOK);
