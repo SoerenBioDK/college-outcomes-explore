@@ -64,9 +64,11 @@ input[type=range]{width:150px;accent-color:var(--accent)}
 #findFields .pscroll{max-height:250px;overflow-y:auto;margin-top:4px}
 .fnote{font-size:13px;line-height:1.5;margin:4px 0 0}.fnote small{color:var(--muted);display:block}
 .panel.wide{grid-column:1/-1}
-.rkctl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
-.rkmain{display:flex;gap:14px;align-items:flex-start}.rkmain .rkwrap{flex:1 1 0;min-width:0}.rkmap{flex:0 0 380px;min-width:0}.rkmap[hidden]{display:none}.rkmap .legend{margin:2px 0 6px}.rkmap .sub{margin:6px 0}@media (max-width:1000px){.rkmain{flex-direction:column;align-items:stretch}.rkmain .rkwrap{flex:none}.rkmap{flex:none;width:100%}}
-.rkwrap{position:relative;overflow-x:auto;border-top:1px solid var(--line)}.rkbody{height:520px;overflow-y:auto;overflow-x:hidden;border-bottom:1px solid var(--line)}#rkHead,#rkSvg{display:block;max-width:none}
+.rkctl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:8px}
+#gridRank{grid-template-columns:300px minmax(0,1fr);align-items:start}.rkside{display:flex;flex-direction:column;gap:10px;min-width:0}@media (max-width:1000px){#gridRank{grid-template-columns:minmax(0,1fr)}}
+.rktool{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}.rkl{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.rkl b{font-family:var(--mono)}.pills{display:inline-flex;gap:6px}.pills button{border-radius:999px;padding:4px 12px;font-size:13px}.pills button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}.rktool input[type=range]{width:120px}#gridRank .crit .field{gap:2px}.fpair{display:grid;grid-template-columns:1fr 1fr;gap:8px}#gridRank .crit{gap:7px}#sR{margin:0}#rkMapLg{font-size:11px;gap:4px 10px}
+#rkMapLg{margin-bottom:6px}#rkMap{min-height:60px}#rkMapNote{margin:6px 0}
+.rkwrap{position:relative;overflow-x:auto;border-top:1px solid var(--line)}#rkHead,#rkSvg{display:block;max-width:none}
 .fctl2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px;align-items:end}.fctl2 select{max-width:100%}.fctl2 input[type=range],#gridFind .panel.wide>.field input[type=range]{width:100%}
 .crit{gap:8px;padding:10px 12px}.fctl2.c4{grid-template-columns:repeat(4,minmax(0,1fr))}.fctl2 .field label{font-size:11.5px;line-height:1.25}.frow3{display:flex;gap:6px 22px;flex-wrap:wrap;align-items:center}
 @media(max-width:900px){.fctl2.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -168,19 +170,26 @@ svg .grid line{stroke:var(--line);stroke-opacity:.6} svg .grid path{display:none
   <section class="panel" aria-label="Profile of the chosen school"><h3 id="tF4"></h3><p class="sub" id="sF4"></p><div class="body" id="findProfile"></div><div class="fnote" id="findFields"></div></section>
 </div>
 <div class="grid" id="gridRank" hidden>
-  <section class="panel wide" aria-label="Rank schools">
+  <div class="rkside">
+  <section class="panel crit" aria-label="Hard filters">
     <h3 id="tR"></h3><p class="sub" id="sR"></p>
-    <div class="rkctl">
-      <div class="field"><label for="rkAdd">Columns</label><select id="rkAdd"></select></div>
-      <div class="field"><label for="rkType">School type</label><select id="rkType"></select></div>
-      <div class="field"><label for="rkRight">Right side shows</label><select id="rkRight"></select></div>
-      <div class="field"><label for="rkQ">Search a school</label><input type="text" id="rkQ" placeholder="e.g. Stanford" autocomplete="off"></div>
-      <button type="button" id="rkReset">Equal weights</button><button type="button" id="rkFreeze" title="Copy the left ranking (its columns, weights and directions) into the second ranking on the right">Copy to second ranking</button><button type="button" id="rkClear">Clear filters</button>
-    </div>
-    <div class="legend" id="rkLg"><span>Slope lines, left ranking compared with the second one:</span><span><i style="background:var(--up)"></i>ranked higher on the left</span><span><i style="background:var(--dn)"></i>ranked lower on the left</span><span><i style="background:#bdbdbd"></i>same rank</span></div>
-    <div class="rkmain"><div class="rkwrap" id="rkWrap"><svg id="rkHead" role="img" aria-label="Column headers: weights, histograms and filters"></svg><div class="rkbody" id="rkBody"><svg id="rkSvg" role="img" aria-label="Ranked list of schools with stacked score bars"></svg></div></div>
-    <div class="rkmap" id="rkMapBox" hidden><div class="legend" id="rkMapLg"></div><div id="rkMap"></div><p class="sub" id="rkMapNote"></p><button type="button" id="rkGeoClear">Clear map selection</button></div></div>
+    <div class="field"><label for="rkArea">Region or state</label><select id="rkArea"></select></div>
+    <div class="field"><label for="rkGroup">Broad field (largest program per school)</label><select id="rkGroup"></select></div>
+    <div class="field"><label for="rkField">Field of study (Bachelor's)</label><select id="rkField"></select></div>
+    <div class="field"><label for="rkEarn"><span id="rkEarnLab">Min. earnings</span>: <span class="out" id="rkEarnOut"></span></label><input type="range" id="rkEarn" min="0" max="120000" step="1000" value="0"></div>
+    <div class="field"><label for="rkCost">Cost measure</label><select id="rkCost"></select></div>
+    <div class="field"><label for="rkCap">Maximum cost per year: <span class="out" id="rkCapOut"></span></label><input type="range" id="rkCap" min="0" max="75000" step="1000" value="75000"></div>
+    <div class="fpair"><div class="field"><label for="rkType">School type</label><select id="rkType"></select></div><div class="field"><label for="rkQ">Search a school</label><input type="text" id="rkQ" placeholder="e.g. Stanford" autocomplete="off"></div></div>
+    <div class="rkctl"><label class="chk"><input type="checkbox" id="rkAcad"> <span>Include U.S. military and maritime academies</span></label><button type="button" id="rkClear">Clear filters</button></div>
   </section>
+  <section class="panel" aria-label="Map of the schools"><h3 id="tRM"></h3><div class="legend" id="rkMapLg"></div><div id="rkMap"></div><p class="sub" id="rkMapNote"></p><button type="button" id="rkGeoClear">Clear map selection</button></section>
+  </div>
+  <section class="panel rkmain" aria-label="Ranking and real values"><h3 id="tRL"></h3><p class="sub" id="sRL"></p>
+    <div class="rktool"><span class="rkl">Compare against</span><span class="pills"><button type="button" id="rkModeA" aria-pressed="true">Same schools, re-sorted</button><button type="button" id="rkModeB" aria-pressed="false">All schools in the ranking</button></span>
+      <label class="rkl" for="rkRows">Rows shown: <b id="rkRowsOut">18</b></label><input type="range" id="rkRows" min="5" max="30" step="1" value="18">
+      <select id="rkAdd" aria-label="Add a ranking column"></select><button type="button" id="rkReset">Equal weights</button><button type="button" id="rkPinClear">Clear pins</button><span class="sub" id="rkPinNote" style="margin:0"></span></div>
+    <div class="legend" id="lgRP"></div>
+    <div class="rkwrap" id="rkWrap"><svg id="rkHead" role="img" aria-label="Column headers: weights, direction, histograms and range filters"></svg><svg id="rkSvg" role="img" aria-label="Ranking and per-variable columns"></svg></div></section>
 </div>
 </div>
 <div class="tip" id="tip"></div>
@@ -32115,17 +32124,18 @@ function renderFindMap({all,area,fits},foc){ $("lgF3").innerHTML=findColor(all).
     .on("click",function(e){const [px,py]=d3.pointer(e,this),o=qt.find(px,py,10); if(o)pickSchool(o.d);});
 }
 
-/* ---------- rank schools (LineUp-style) ---------- */
+/* ---------- rank schools: hard filters, parallel coordinates, LineUp-style ranking, map, real-value bars ---------- */
 const RK_ATTRS=[
  ["Earnings_10yr","Earnings 10 yrs","Median earnings, 10 yrs after entry",1,"$"],
  ["Earnings_6yr","Earnings 6 yrs","Median earnings, 6 yrs after entry",1,"$"],
  ["Above_threshold_10yr","Beats HS grad","% earning more than a high-school graduate, 10 yrs",1,"%"],
  ["Completion_rate","Completion","Completion rate",1,"%"],
  ["Retention_rate","Retention","First-year retention rate",1,"%"],
- ["Grad_debt","Grad debt","Median debt of graduates",-1,"$"],
- ["Net_price","Net price","Average net price per year",-1,"$"],
- ["Cost_of_attendance","Cost of att.","Cost of attendance per year",-1,"$"],
- ["Tuition_in_state","Tuition","Tuition and fees (in-district/in-state)",-1,"$"],
+ ["Grad_debt","Grad debt","Median debt of graduates (federal loans, which international students cannot take)",-1,"$"],
+ ["Tuition_out_of_state","Tuition out-of-state","Tuition and fees for out-of-state students (closest to what an international student pays)",-1,"$"],
+ ["Cost_of_attendance","Cost of attendance","Cost of attendance per year (tuition, housing, books)",-1,"$"],
+ ["Net_price","Net price","Average net price per year (only students with U.S. federal aid)",-1,"$"],
+ ["Tuition_in_state","Tuition in-state","Tuition and fees (in-district/in-state)",-1,"$"],
  ["Default_2yr","Default rate","Loan default rate, 2 yrs after repayment starts (about half of schools)",-1,"%"],
  ["Pell_share","Pell share","% of students with Pell grants (access)",1,"%"],
  ["Lowincome_share","Low-income share","% of first-time students from families under $48k (access)",1,"%"],
@@ -32139,17 +32149,30 @@ const RK_ATTRS=[
  ["SAT_avg","SAT average","Average SAT score (selective schools only)",1,"n"]];
 const RKA=new Map(RK_ATTRS.map(a=>[a[0],{k:a[0],short:a[1],long:a[2],dir:a[3],f:a[4]}]));
 const RK_COL=d3.schemeSet2; // ColorBrewer Set2 (up to 8 columns)
+const RK_INK="#1f2428"; // Set2 colours are light in both themes, so text on them stays dark
 const rkFmt=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(",")(Math.round(v)):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
-const rkStats=new Map(); // lo/hi/histogram source per attribute over all schools with a value
+const rkCompact=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(".3~s")(v):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
+const rkStats=new Map();
 function rkStat(k){ if(!rkStats.has(k)){const v=rows.map(d=>d[k]).filter(x=>x!=null); rkStats.set(k,{lo:d3.min(v),hi:d3.max(v),vals:v});} return rkStats.get(k); }
 const rkNorm=(c,v)=>{const s=rkStat(c.k),g=(v-s.lo)/((s.hi-s.lo)||1); return c.dir>0?g:1-g};
-const RK_H=20, RK_BODY=520;
-S.rank={cols:["Earnings_10yr","Completion_rate","Retention_rate","Net_price","Grad_debt"].map((k,i)=>({k,w:.2,dir:RKA.get(k).dir,color:RK_COL[i]})),type:"All",q:"",ranges:{},items:[],snap:null,scroll:0,right:"rank2",geoBox:null,pos:null,hov:null,mapW:0,lastRank:new Map(),chg:null,chgT:0,animate:false};
+const RK_RH=28, RK_HH=118, RK_SY0=68, RK_SY1=94, RK_HY0=56, RK_HY1=98, RK_TYPES=["Public","Private nonprofit","Private for-profit"];
+const RK_SHAPE={"Public":d3.symbolCircle,"Private nonprofit":d3.symbolSquare,"Private for-profit":d3.symbolTriangle},RK_GLYPH={"Public":"●","Private nonprofit":"■","Private for-profit":"▲"};
+const rkSym=d3.symbol().size(75), rkSymPath=t=>rkSym.type(RK_SHAPE[t]||d3.symbolCircle)();
+const RK_STN={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",PR:"Puerto Rico",GU:"Guam",VI:"U.S. Virgin Islands",AS:"American Samoa",MP:"Northern Mariana Islands",FM:"Micronesia",MH:"Marshall Islands",PW:"Palau"};
+const RK_COSTS=[["Tuition_out_of_state","Tuition, out-of-state"],["Cost_of_attendance","Cost of attendance"],["Net_price","Net price (federal aid)"]];
+const RK_CAPMAX=new Map(RK_COSTS.map(([k])=>[k,Math.ceil(d3.max(rows,d=>d[k])/5000)*5000]));
+S.rank={cols:["Earnings_10yr","Completion_rate","Retention_rate","Tuition_out_of_state","Grad_debt"].map((k,i)=>({k,w:.2,dir:RKA.get(k).dir,color:RK_COL[i]})),type:"All",q:"",ranges:{},items:[],lastRank:new Map(),chg:null,chgT:0,animate:false,
+  geoBox:null,pos:null,hov:null,mapW:0,group:"",field:"",minE:0,costVar:"Tuition_out_of_state",cap:RK_CAPMAX.get("Tuition_out_of_state"),fieldSet:null,fieldE:null,pins:[],acad:false,area:"",nrows:18,mode:"same"};
 const rkInBox=d=>{const b=S.rank.geoBox,p=S.rank.pos&&S.rank.pos.get(d.UNITID); return !!p&&p[0]>=b[0][0]&&p[0]<=b[1][0]&&p[1]>=b[0][1]&&p[1]<=b[1][1]};
 function rkRank(cols,skipGeo){
-  const R=S.rank,q=R.q.trim().toLowerCase(),rk=Object.entries(R.ranges),items=[];
+  const R=S.rank,q=R.q.trim().toLowerCase(),rk=Object.entries(R.ranges),items=[],capMax=RK_CAPMAX.get(R.costVar);
   for(const d of rows){
     if(R.type!=="All"&&d.Control!==R.type)continue; if(q&&!d.INSTNM.toLowerCase().includes(q))continue;
+    if(!R.acad&&d.Special)continue;
+    if(R.area&&(R.area[0]==="R"?d.Region!==R.area.slice(2):d.STABBR!==R.area.slice(2)))continue;
+    if(R.fieldSet&&!R.fieldSet.has(d.UNITID))continue;
+    if(R.minE>0){const ev=R.fieldE?R.fieldE.get(d.UNITID):d.Earnings_10yr; if(ev==null||ev<R.minE)continue}
+    if(R.cap<capMax){const v=d[R.costVar]; if(v==null||v>R.cap)continue}
     if(!skipGeo&&R.geoBox&&!rkInBox(d))continue;
     let ok=true; for(const c of cols){if(d[c.k]==null){ok=false;break}}
     if(ok)for(const [k,r] of rk){const v=d[k]; if(v==null||v<r[0]||v>r[1]){ok=false;break}}
@@ -32160,215 +32183,216 @@ function rkRank(cols,skipGeo){
   let last=null,lr=0; items.forEach((it,i)=>{const sc=Math.round(it.score*1e6); if(sc!==last){lr=i+1;last=sc} it.rank=lr; it.pos=i});
   return items;
 }
-function rkSnapCompute(){ const sn=S.rank.snap; if(!sn)return; sn.items=rkRank(sn.cols); sn.idx=new Map(sn.items.map((it,i)=>[it.d.UNITID,i])); }
 function rkCompute(track){
   const R=S.rank,items=rkRank(R.cols); R.items=items;
   const chg=new Map(); if(track)for(const it of items){const o=R.lastRank.get(it.d.UNITID); if(o!=null&&o!==it.rank)chg.set(it.d.UNITID,o-it.rank)}
   R.chg=track?chg:null; if(chg.size)R.chgT=performance.now();
   R.lastRank=new Map(items.map(it=>[it.d.UNITID,it.rank]));
-  rkSnapCompute();
 }
-function rkFreeze(){ const R=S.rank; R.snap={cols:R.cols.map(c=>({...c})),items:[],idx:new Map()}; rkSnapCompute(); }
+function rkApplyField(){ const R=S.rank; if(!R.field&&!R.group){R.fieldSet=null;R.fieldE=null;return} const b=findBase(R.field,R.group); R.fieldSet=new Set(b.map(d=>d.UNITID)); R.fieldE=new Map(b.map(d=>[d.UNITID,d.E])); }
+const rkHi=()=>{const R=S.rank; return R.pins.length?R.items.filter(it=>R.pins.includes(it.d.UNITID)):R.items.slice(0,Math.min(8,R.nrows))};
 function rkSetWeights(ws){ const t=d3.sum(ws); S.rank.cols.forEach((c,i)=>c.w=ws[i]/t); }
+function rkLines(t,m){ if(m<4)return[]; const cut=s=>s.length>m?s.slice(0,m-1)+"…":s; if(t.length<=m)return[t]; const w=t.split(" "); let a=w[0],i=1; while(i<w.length&&(a+" "+w[i]).length<=m){a+=" "+w[i];i++} const b=w.slice(i).join(" "); return [cut(a),b?cut(b):""]; }
 function rkLayout(){
-  const map=S.rank.right==="map",wrapW=Math.max(map?700:960,Math.round($("rkWrap").clientWidth||1300));
-  const nameX=66,nameW=190,barX=nameX+nameW+6,slopeW=map?0:96,rankW2=map?0:62,nameW2=map?0:150;
-  const avail=wrapW-barX-slopeW-(map?0:rankW2+4+nameW2+4)-34;
-  const bw=map?Math.max(240,avail-44):Math.max(240,Math.round(avail*.6)), sbw=map?0:Math.max(150,Math.round(avail*.4));
-  const slopeX=barX+bw+40, rX=slopeX+slopeW, rnameX=rX+rankW2+4, sbarX=rnameX+nameW2+4;
-  return {W:Math.max(wrapW,sbarX+sbw+(map?10:40)),nameX,nameW,barX,bw,slopeX,slopeW,rX,rankW2,rnameX,nameW2,sbarX,sbw};
+  const n=S.rank.cols.length,avail=Math.round($("rkWrap").clientWidth||900),nameX=60,nameW=200,barX=nameX+nameW+8,bw=130,scX=barX+bw+6,LW=scX+30,gap=38,cw=Math.max(112,Math.floor((avail-LW-16)/n)),tw=cw-gap;
+  return {W:LW+n*cw+16,nameX,nameW,barX,bw,scX,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
 }
-function rkHist(c){ const s=rkStat(c.k),b=12,bins=Array(b).fill(0); for(const v of s.vals){let g=(v-s.lo)/((s.hi-s.lo)||1); if(c.dir<0)g=1-g; bins[Math.min(b-1,Math.floor(g*b))]++} return bins; }
-function rkRangeToPx(c,L,x0,w){ const r=S.rank.ranges[c.k]; if(!r)return null; const s=rkStat(c.k),g=r.map(v=>{const t=(v-s.lo)/((s.hi-s.lo)||1);return c.dir>0?t:1-t}).sort((a,b)=>a-b); return [x0+g[0]*w,x0+g[1]*w]; }
-function rkPxToRange(c,px,x0,w){ const s=rkStat(c.k),g=px.map(p=>Math.max(0,Math.min(1,(p-x0)/w))),r=g.map(t=>c.dir>0?s.lo+t*(s.hi-s.lo):s.hi-t*(s.hi-s.lo)); return r.sort((a,b)=>a-b); }
-let rkBusy=false;
+function rkHistReal(k,b){ const s=rkStat(k),bins=Array(b).fill(0); for(const v of s.vals)bins[Math.min(b-1,Math.floor((v-s.lo)/((s.hi-s.lo)||1)*b))]++; return bins; }
+function rkLegend(){ const R=S.rank; $("lgRP").innerHTML=R.cols.map(c=>`<span><i style="background:${c.color};border-radius:2px"></i>${esc(RKA.get(c.k).short)}</span>`).join("")+`<span style="margin-left:8px">Schools:</span>`+RK_TYPES.map(t=>`<span><b style="color:${COLORS[t]};font-size:13px">${RK_GLYPH[t]}</b> ${t}</span>`).join(""); }
 function renderRankHeader(){
-  const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W).attr("height",114);
+  const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W).attr("height",RK_HH);
   let g=svg.select("g.main"); if(g.empty())g=svg.append("g").attr("class","main");
-  // static labels
-  const lab=(cls,x,y,t,anchor)=>{let e=g.select("text."+cls); if(e.empty())e=g.append("text").attr("class",cls).attr("fill","var(--muted)").style("font-size","11px").style("font-weight",600); e.attr("x",x).attr("y",y).attr("text-anchor",anchor||"start").text(t)};
-  lab("hrank",L.nameX-6,110,"Rank","end"); lab("hname",L.nameX,110,"School"); if(R.right==="map")g.selectAll("text.hrank2,text.hname2").remove(); else {lab("hrank2",L.rX+L.rankW2,110,"Rank","end"); lab("hname2",L.rnameX,110,"Second ranking");}
+  const lab=(cls,x,y,t,anchor,big)=>{let e=g.select("text."+cls); if(e.empty())e=g.append("text").attr("class",cls).style("fill",big?"var(--fg)":"var(--muted)").style("font-size",big?"14px":"11px").style("font-weight",big?700:600); e.attr("x",x).attr("y",y).attr("text-anchor",anchor||"start").text(t)};
+  lab("ttl",4,16,"Your ranking","start",true); lab("ttl2",4,31,"weighted score, 0 to 100"); lab("hrank",L.nameX-22,RK_HH-6,"Rank","end"); lab("hname",L.nameX,RK_HH-6,"School"); lab("hshare",L.barX,RK_SY0-6,"Weights: drag a divider");
   let x=L.barX; const xs=R.cols.map(c=>{const o={c,x,w:c.w*L.bw}; x+=o.w; return o});
-  // segments
-  const segs=g.selectAll("g.seg").data(xs,o=>o.c.k).join(e=>{const s=e.append("g").attr("class","seg"); s.append("rect").attr("class","bg"); s.append("g").attr("class","bars"); s.append("g").attr("class","brush"); s.append("rect").attr("class","top").attr("height",5);
-      s.append("text").attr("class","nm").attr("y",21).style("font-size","11px").style("font-weight",600).attr("fill","var(--fg)");
-      s.append("text").attr("class","pct").attr("role","button").attr("tabindex",0).attr("text-anchor","end").style("font-size","11px").style("font-weight",700).style("cursor","text").attr("fill","var(--fg)");
-      s.append("g").attr("class","dirb").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","11px").attr("fill","var(--fg)");
-      s.append("g").attr("class","rm").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","11px").attr("fill","var(--muted)").text("✕");
-      return s});
-  segs.each(function(o){
-    const s=d3.select(this),c=o.c,hx=o.x+1,hw=Math.max(2,o.w-2);
-    s.select("rect.bg").attr("x",o.x).attr("y",40).attr("width",o.w).attr("height",56).attr("fill","var(--soft)").attr("stroke","var(--panel)");
-    s.select("rect.top").attr("x",o.x).attr("y",0).attr("width",o.w).attr("fill",c.color).attr("stroke","var(--panel)");
-    const bins=rkHist(c),mx=d3.max(bins)||1,bw=hw/bins.length;
-    s.select("g.bars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>hx+i*bw).attr("width",Math.max(.5,bw-1)).attr("y",d=>94-(d/mx)*48).attr("height",d=>(d/mx)*48).attr("fill",c.color).attr("fill-opacity",.9);
-    s.select("text.nm").attr("x",o.x+4).text(()=>{const t=RKA.get(c.k).short,m=Math.floor((o.w-24)/6.4); return m<4?"":t.length>m?t.slice(0,m-1)+"…":t});
-    s.select("g.dirb").attr("transform",`translate(${o.x+4},34)`).attr("aria-label",`${RKA.get(c.k).short}: ${c.dir>0?"higher":"lower"} is better. Press to flip.`).select("text").text(o.w>=96?(c.dir>0?"↑ higher":"↓ lower"):(c.dir>0?"↑":"↓")).style("display",o.w<18?"none":null);
-    s.select("text.pct").attr("x",o.w<34?o.x+o.w/2:o.x+o.w-5).attr("text-anchor",o.w<34?"middle":"end").attr("y",34).style("font-size",o.w<34?"10px":"11px").style("paint-order","stroke").style("stroke","var(--panel)").attr("stroke-width",o.w<34?3:0).text(Math.round(c.w*100)+"%").attr("aria-label",`${RKA.get(c.k).short} weight ${Math.round(c.w*100)} percent. Double-click or press Enter to type a value.`)
+  g.selectAll("g.seg").data(xs,o=>o.c.k).join(e=>{const s=e.append("g").attr("class","seg"); s.append("rect").attr("class","sg"); s.append("text").attr("class","pct").attr("role","button").attr("tabindex",0).style("font-weight",700).style("cursor","text").style("fill",RK_INK); s.append("title"); return s})
+   .each(function(o){ const s=d3.select(this),c=o.c,nar=o.w<34;
+    s.select("rect.sg").attr("x",o.x).attr("y",RK_SY0).attr("width",o.w).attr("height",RK_SY1-RK_SY0).attr("fill",c.color).attr("stroke","var(--panel)");
+    s.select("text.pct").attr("x",o.x+o.w/2).attr("y",RK_SY0+17).attr("text-anchor","middle").style("font-size",nar?"10px":"12px").text(Math.round(c.w*100)+"%").attr("aria-label",`${RKA.get(c.k).short} weight ${Math.round(c.w*100)} percent. Double-click or press Enter to type a value.`)
       .on("dblclick",function(){rkEdit(c,this)}).on("keydown",function(e){if(e.key==="Enter"){e.preventDefault();rkEdit(c,this)}});
-    s.select("g.rm").attr("transform",`translate(${o.x+o.w-14},21)`).attr("aria-label",`Remove column ${RKA.get(c.k).short}`).style("display",R.cols.length<2||o.w<30?"none":null).select("text").text("✕");
-    s.select("g.dirb").on("click",()=>{c.dir=-c.dir;delete R.ranges[c.k];rkUpdate(true,{animate:true})}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;delete R.ranges[c.k];rkUpdate(true,{animate:true})}});
-    s.select("g.rm").on("click",()=>rkRemove(c.k)).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();rkRemove(c.k)}});
-    s.select("title").remove(); s.append("title").text(`${RKA.get(c.k).long}. Weight ${Math.round(c.w*100)}%. Drag on the histogram to keep only schools in that range.`);
-    // brush
-    const br=d3.brushX().extent([[hx,40],[hx+hw,96]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=rkPxToRange(c,e.selection,hx,hw); rkUpdate(false,{track:false}); });
-    const bg=s.select("g.brush"); bg.call(br); const px=rkRangeToPx(c,L,hx,hw); bg.call(br.move,px);
-  });
-  // dividers
+    s.select("title").text(`${RKA.get(c.k).long}. Weight ${Math.round(c.w*100)}%. Double-click the percentage to type a value.`); });
   const divs=xs.slice(0,-1).map((o,i)=>({i,x:o.x+o.w,k:o.c.k,k2:xs[i+1].c.k}));
-  g.selectAll("rect.div").data(divs,d=>d.k+d.k2).join("rect").attr("class","div").attr("y",38).attr("width",9).attr("height",58).attr("x",d=>d.x-4.5).attr("fill","var(--fg)").attr("fill-opacity",0).attr("tabindex",0).attr("role","slider")
+  g.selectAll("rect.div").data(divs,d=>d.k+d.k2).join("rect").attr("class","div").attr("y",RK_SY0).attr("width",9).attr("height",RK_SY1-RK_SY0).attr("x",d=>d.x-4.5).attr("fill","var(--fg)").attr("fill-opacity",0).attr("tabindex",0).attr("role","slider")
     .attr("aria-label",d=>`Weight divider between ${RKA.get(d.k).short} and ${RKA.get(d.k2).short}`).attr("aria-valuemin",0).attr("aria-valuemax",100).attr("aria-valuenow",d=>Math.round(R.cols[d.i].w*100)).style("cursor","col-resize")
     .on("mouseenter",function(){d3.select(this).attr("fill-opacity",.25)}).on("mouseleave",function(){d3.select(this).attr("fill-opacity",0)})
     .on("keydown",(e,d)=>{ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return; e.preventDefault(); rkShift(d.i,(e.key==="ArrowRight"?1:-1)*.02); })
-    .call(d3.drag().on("drag",(e,d)=>rkShift(d.i,e.dx/rkLayout().bw)));
-  // second ranking header: same weight controls as the left one (drag a divider, double-click a percentage, flip the arrow)
-  const sn=R.right==='map'?null:R.snap; const sx=sn?(()=>{let x=L.sbarX;return sn.cols.map(c=>{const o={c,x,w:c.w*L.sbw};x+=o.w;return o})})():[];
-  const INK="#1f2428"; // Set2 colours are light in both themes, so the text on them stays dark
-  g.selectAll("g.fz").data(sx,o=>o.c.k).join(e=>{const s=e.append("g").attr("class","fz"); s.append("rect").attr("class","fzr"); s.append("text").attr("class","fnm"); s.append("g").attr("class","fdir").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text"); s.append("text").attr("class","fpct").attr("role","button").attr("tabindex",0).style("cursor","text"); s.append("title"); return s})
-    .each(function(o){ const s=d3.select(this),c=o.c,nar=o.w<40,flip=()=>{c.dir=-c.dir; rkUpdateB({animate:true})};
-      s.select("rect.fzr").attr("x",o.x).attr("y",60).attr("width",o.w).attr("height",36).attr("fill",c.color).attr("stroke","var(--panel)");
-      s.select("text.fnm").attr("x",o.x+3).attr("y",73).style("font-size","10.5px").style("font-weight",600).style("fill",INK).style("pointer-events","none").text(()=>{const t=RKA.get(c.k).short,m=Math.floor((o.w-4)/6); return m<4?"":t.length>m?t.slice(0,m-1)+"…":t});
-      s.select("g.fdir").attr("transform",`translate(${o.x+3},90)`).style("display",nar?"none":null).attr("aria-label",`Second ranking, ${RKA.get(c.k).short}: ${c.dir>0?"higher":"lower"} is better. Press to flip.`).on("click",flip).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();flip()}}).select("text").style("font-size","11px").style("fill",INK).text(c.dir>0?"↑":"↓");
-      s.select("text.fpct").attr("x",nar?o.x+o.w/2:o.x+o.w-4).attr("y",90).attr("text-anchor",nar?"middle":"end").style("font-size",nar?"9.5px":"10.5px").style("font-weight",700).style("fill",INK).style("paint-order","stroke").style("stroke",c.color).attr("stroke-width",nar?3:0).text(Math.round(c.w*100)+"%").attr("aria-label",`Second ranking, ${RKA.get(c.k).short} weight ${Math.round(c.w*100)} percent. Double-click or press Enter to type a value.`)
-        .on("dblclick",function(){rkEdit(c,this,true)}).on("keydown",function(e){if(e.key==="Enter"){e.preventDefault();rkEdit(c,this,true)}});
-      s.select("title").text(`Second ranking: ${RKA.get(c.k).long}. Weight ${Math.round(c.w*100)}%.`); });
-  const divsB=sx.slice(0,-1).map((o,i)=>({i,x:o.x+o.w,k:o.c.k,k2:sx[i+1].c.k}));
-  g.selectAll("rect.div2").data(divsB,d=>d.k+d.k2).join("rect").attr("class","div2").attr("y",60).attr("width",9).attr("height",36).attr("x",d=>d.x-4.5).attr("fill","var(--fg)").attr("fill-opacity",0).attr("tabindex",0).attr("role","slider").style("cursor","col-resize")
-    .attr("aria-label",d=>`Second ranking, weight divider between ${RKA.get(d.k).short} and ${RKA.get(d.k2).short}`).attr("aria-valuemin",0).attr("aria-valuemax",100).attr("aria-valuenow",d=>Math.round(R.snap.cols[d.i].w*100))
-    .on("mouseenter",function(){d3.select(this).attr("fill-opacity",.25)}).on("mouseleave",function(){d3.select(this).attr("fill-opacity",0)})
-    .on("keydown",(e,d)=>{ if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return; e.preventDefault(); rkShift(d.i,(e.key==="ArrowRight"?1:-1)*.02,true); })
-    .call(d3.drag().on("drag",(e,d)=>rkShift(d.i,e.dx/rkLayout().sbw,true)));
-  g.select("text.fzsub").remove(); g.append("text").attr("class","fzsub").attr("x",L.sbarX).attr("y",110).style("font-size","11px").attr("fill","var(--muted)").text(sn?`${sn.items.length.toLocaleString("en-US")} schools · editable`:"");
-  g.select("text.curlab").remove(); g.append("text").attr("class","curlab").attr("x",L.barX).attr("y",110).style("font-size","11px").attr("fill","var(--muted)").text("Segment width = weight; drag a divider");
+    .call(d3.drag().on("drag",(e,d)=>rkShift(d.i,e.dx/rkLayout().bw))).raise();
+  // right side: one header per variable (name, direction, histogram of all schools with a range brush)
+  g.selectAll("g.hc").data(R.cols,c=>c.k).join(e=>{const h=e.append("g").attr("class","hc"); h.append("rect").attr("class","top").attr("height",6); h.append("text").attr("class","nm1").style("font-size","12px").style("font-weight",700); h.append("text").attr("class","nm2").style("font-size","12px").style("font-weight",700);
+      h.append("g").attr("class","dirb").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","10.5px").style("fill","var(--muted)");
+      const rm=h.append("g").attr("class","rm").attr("role","button").attr("tabindex",0).style("cursor","pointer"); rm.append("rect").attr("x",-4).attr("y",-12).attr("width",18).attr("height",16).attr("fill","transparent"); rm.append("text").style("font-size","11px").style("fill","var(--muted)").text("✕");
+      h.append("g").attr("class","hbars"); h.append("g").attr("class","brush"); h.append("text").attr("class","lo").style("font-size","10px").style("fill","var(--muted)"); h.append("text").attr("class","hi").attr("text-anchor","end").style("font-size","10px").style("fill","var(--muted)"); h.append("title"); return h})
+   .each(function(c,j){ const h=d3.select(this),x0=L.x0(j),tw=L.tw,s=rkStat(c.k),a=RKA.get(c.k),ln=rkLines(a.short,Math.floor((tw-4)/6.6));
+    h.select("rect.top").attr("x",x0).attr("y",0).attr("width",tw).attr("fill",c.color);
+    h.select("text.nm1").attr("x",x0).attr("y",22).text(ln[0]||""); h.select("text.nm2").attr("x",x0).attr("y",35).text(ln[1]||"");
+    h.select("g.dirb").attr("transform",`translate(${x0},49)`).attr("aria-label",`${a.short}: ${c.dir>0?"highest":"lowest"} is best. Press to flip.`).select("text").text(c.dir>0?"↑ high = best":"↓ low = best");
+    h.select("g.dirb").on("click",()=>{c.dir=-c.dir;rkUpdate(true,{animate:true})}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;rkUpdate(true,{animate:true})}});
+    h.select("g.rm").attr("transform",`translate(${x0+tw+4},18)`).attr("aria-label",`Remove column ${a.short}`).style("display",R.cols.length<2?"none":null).on("click",()=>rkRemove(c.k)).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();rkRemove(c.k)}});
+    const bins=rkHistReal(c.k,14),mx=d3.max(bins)||1,bwid=tw/bins.length;
+    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill",c.color).attr("fill-opacity",.85);
+    h.select("text.lo").attr("x",x0).attr("y",RK_HH-6).text(rkCompact(c.k,s.lo)); h.select("text.hi").attr("x",x0+tw).attr("y",RK_HH-6).text(rkCompact(c.k,s.hi));
+    h.select("title").text(`${a.long}. The histogram shows all schools; drag on it to keep only schools in that range.`);
+    const sx=d3.scaleLinear([s.lo,s.hi],[x0,x0+tw]),br=d3.brushX().extent([[x0,RK_HY0-2],[x0+tw,RK_HY1]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=e.selection.map(sx.invert).sort(d3.ascending); rkUpdate(false,{track:false}); });
+    const bg=h.select("g.brush"); bg.call(br); bg.call(br.move,R.ranges[c.k]?R.ranges[c.k].map(sx):null);
+  });
+  rkLegend();
 }
 let rkInput=null;
-function rkEdit(c,node,B){ if(rkInput){const o=rkInput;rkInput=null;o.remove()}
-  const R=S.rank,cols=B?R.snap.cols:R.cols,mx=100-2*(cols.length-1),wrap=$("rkWrap"),wr=wrap.getBoundingClientRect(),nr=node.getBoundingClientRect(),inp=document.createElement("input");
+function rkEdit(c,node){ if(rkInput){const o=rkInput;rkInput=null;o.remove()}
+  const R=S.rank,mx=100-2*(R.cols.length-1),wrap=$("rkWrap"),wr=wrap.getBoundingClientRect(),nr=node.getBoundingClientRect(),inp=document.createElement("input");
   inp.type="number"; inp.min=2; inp.max=mx; inp.step=1; inp.value=Math.round(c.w*100); inp.setAttribute("aria-label",`Weight of ${RKA.get(c.k).short} in percent, 2 to ${mx}`); inp.id="rkWInput";
   inp.style.cssText=`position:absolute;left:${nr.right-wr.left+wrap.scrollLeft-66}px;top:${nr.top-wr.top-4}px;width:62px;padding:1px 4px;font-size:12px;z-index:3`;
   wrap.appendChild(inp); rkInput=inp; inp.focus(); inp.select();
-  const done=ok=>{ if(rkInput!==inp)return; rkInput=null; const v=+inp.value; inp.remove(); if(ok&&inp.value!==""&&isFinite(v))rkSetOne(c.k,v,B) };
+  const done=ok=>{ if(rkInput!==inp)return; rkInput=null; const v=+inp.value; inp.remove(); if(ok&&inp.value!==""&&isFinite(v))rkSetOne(c.k,v) };
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();done(true)}else if(e.key==="Escape"){e.preventDefault();done(false)}}); inp.addEventListener("blur",()=>done(true)); }
-function rkSetOne(k,pct,B){ const R=S.rank,cols=B?R.snap.cols:R.cols,c=cols.find(x=>x.k===k); if(!c||cols.length<2)return; const t=Math.max(2,Math.min(100-2*(cols.length-1),pct))/100, others=cols.filter(x=>x!==c);
-  const m=.02,nk=others.length,ex=d3.sum(others,x=>Math.max(0,x.w-m)); others.forEach(x=>x.w=m+(ex>0?Math.max(0,x.w-m)/ex:1/nk)*(1-t-m*nk)); c.w=t; B?rkUpdateB({animate:true}):rkUpdate(true,{animate:true}); }
-function rkShift(i,dw,B){ const cs=B?S.rank.snap.cols:S.rank.cols,a=cs[i],b=cs[i+1],m=.02; dw=Math.max(m-a.w,Math.min(b.w-m,dw)); a.w+=dw; b.w-=dw; B?rkUpdateB():rkUpdate(true,{track:true}); }
-function rkUpdateB(o){ o=o||{}; S.rank.animate=!!o.animate; rkSnapCompute(); renderRankHeader(); renderRankBody(); }
+function rkSetOne(k,pct){ const R=S.rank,cols=R.cols,c=cols.find(x=>x.k===k); if(!c||cols.length<2)return; const t=Math.max(2,Math.min(100-2*(cols.length-1),pct))/100, others=cols.filter(x=>x!==c);
+  const m=.02,nk=others.length,ex=d3.sum(others,x=>Math.max(0,x.w-m)); others.forEach(x=>x.w=m+(ex>0?Math.max(0,x.w-m)/ex:1/nk)*(1-t-m*nk)); c.w=t; rkUpdate(true,{animate:true,light:true}); }
+function rkShift(i,dw){ const cs=S.rank.cols,a=cs[i],b=cs[i+1],m=.02; dw=Math.max(m-a.w,Math.min(b.w-m,dw)); a.w+=dw; b.w-=dw; rkUpdate(true,{track:true,light:true}); }
 function rkRemove(k){ const R=S.rank; if(R.cols.length<2)return; const i=R.cols.findIndex(c=>c.k===k); R.cols.splice(i,1); delete R.ranges[k]; rkSetWeights(R.cols.map(c=>c.w)); rkUpdate(true,{animate:true}); rkFillAdd(); }
 function rkFillAdd(){ const s=$("rkAdd"),used=new Set(S.rank.cols.map(c=>c.k)); s.innerHTML=""; const o0=document.createElement("option"); o0.value=""; o0.textContent=S.rank.cols.length>=8?"(8 columns is the maximum)":"Add a column…"; s.appendChild(o0);
   if(S.rank.cols.length<8)RK_ATTRS.filter(a=>!used.has(a[0])).forEach(a=>{const o=document.createElement("option");o.value=a[0];o.textContent=`${a[1]} (${a[3]>0?"higher":"lower"} = better)`;s.appendChild(o)}); s.value=""; }
 function rkAdd(k){ const R=S.rank; if(!k||R.cols.length>=8)return; const used=new Set(R.cols.map(c=>c.color)),color=RK_COL.find(c=>!used.has(c))||RK_COL[0],n=R.cols.length; R.cols.forEach(c=>c.w*=n/(n+1)); R.cols.push({k,w:1/(n+1),dir:RKA.get(k).dir,color}); rkUpdate(true,{animate:true}); rkFillAdd(); }
-function rkUpdate(header,o){ o=o||{}; S.rank.animate=!!o.animate; rkCompute(o.track!==false); if(header)renderRankHeader(); renderRankBody(); rkCount(); rkMapUpdate(); }
-function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0);
-  $("sR").textContent=`${n.toLocaleString("en-US")} of ${rows.length.toLocaleString("en-US")} schools are ranked: only schools with all ${R.cols.length} chosen values${f?" that also pass your filters":""} are included, and ranks are counted among them.`; }
+function rkUpdate(header,o){ o=o||{}; S.rank.animate=!!o.animate; rkCompute(o.track!==false); if(header)renderRankHeader(); renderRankBody(); rkCount(); rkLinked(!!o.light); }
+function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); }
+function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0)+(R.fieldSet?1:0)+(R.area?1:0)+(R.minE>0?1:0)+(R.cap<RK_CAPMAX.get(R.costVar)?1:0);
+  $("sR").textContent=`${n.toLocaleString("en-US")} of ${rows.length.toLocaleString("en-US")} schools ranked${f?" (filters on)":""}`; $("sR").title=`Only schools with all ${R.cols.length} chosen values${f?" that also pass your filters":""} are ranked; ranks are counted among them.`; }
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rkTip=it=>{const d=it.d; return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>Rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100<br>`+S.rank.cols.map(c=>`${esc(RKA.get(c.k).short)}: ${rkFmt(c.k,d[c.k])}`).join("<br>")+`<br><i>Click to ${S.rank.pins.includes(d.UNITID)?"unpin":"pin"} this school</i>`};
+function rkPin(id){ const R=S.rank,i=R.pins.indexOf(id); if(i>=0)R.pins.splice(i,1); else {R.pins.push(id); if(R.pins.length>10)R.pins.shift()} hideTip(); renderRankBody(); rkLinked(true); }
+function rkPinUI(){ const R=S.rank,hid=R.pins.filter(id=>!R.items.some(it=>it.d.UNITID===id)).length; $("rkPinClear").style.display=R.pins.length?null:"none";
+  $("rkPinNote").textContent=R.pins.length?`${R.pins.length} pinned${hid?` (${hid} hidden by the filters)`:""}.`:"Nothing pinned: the top 8 are on the map. Click a row, a bar or a map dot to pin a school (up to 10)."; }
 function renderRankBody(){
-  const R=S.rank,L=rkLayout(),box=$("rkBody"),sn=R.right==="map"?null:R.snap,N=Math.max(R.items.length,sn?sn.items.length:0);
-  box.style.width=L.W+"px"; const svg=d3.select("#rkSvg").attr("width",L.W).attr("height",Math.max(N,1)*RK_H+6);
-  const top=box.scrollTop,start=Math.max(0,Math.floor(top/RK_H)-3),end=Math.min(N,Math.ceil((top+RK_BODY)/RK_H)+3);
-  const cur=R.items.slice(start,end),fro=sn?sn.items.slice(start,Math.min(end,sn.items.length)):[],foc=S.focus;
-  // current rows
-  const rg=svg.selectAll("g.row").data(cur,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row").attr("transform",it=>`translate(0,${it.pos*RK_H})`); g.append("text").attr("class","chg").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none"); g.append("rect").attr("class","hit").attr("height",RK_H); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)"); g.append("text").attr("class","nmx").style("font-size","12.5px"); g.append("g").attr("class","stack"); g.append("text").attr("class","sc").style("font-size","11px").style("font-family","var(--mono)").attr("fill","var(--muted)"); return g});
-  const anim=R.animate&&!reduced; R.animate=false;
-  (anim?rg.transition().duration(380):rg).attr("transform",it=>`translate(0,${it.pos*RK_H})`);
-  rg.select("rect.hit").attr("x",2).attr("y",0).attr("width",L.barX+L.bw+34).attr("fill",it=>it.d.UNITID===foc?"var(--soft)":"transparent").attr("stroke",it=>it.d.UNITID===foc?"var(--median)":"none").style("cursor","pointer");
-  rg.select("text.rk").attr("x",L.nameX-6).attr("y",14).attr("fill","var(--muted)").text(it=>it.rank);
+  const R=S.rank,L=rkLayout(),RH=RK_RH,n=R.cols.length,N=Math.max(1,R.nrows),pinned=new Set(R.pins),svg=d3.select("#rkSvg");
+  const top=R.items.slice(0,N),extra=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(it=>it&&it.pos>=N).sort((a,b)=>a.pos-b.pos),left=top.concat(extra);
+  const best=(c,a,b)=>c.dir>0?b.d[c.k]-a.d[c.k]:a.d[c.k]-b.d[c.k];
+  const lists=R.cols.map(c=>{ if(R.mode!=="all")return left.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos);
+    const all=R.items.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos),t=all.slice(0,N),have=new Set(t.map(it=>it.d.UNITID)); return t.concat(all.filter(it=>pinned.has(it.d.UNITID)&&!have.has(it.d.UNITID))); });
+  const rowsN=Math.max(1,left.length,...lists.map(l=>l.length)),H=rowsN*RH+6,P0=new Map(left.map((it,i)=>[it.d.UNITID,i])),P=lists.map(l=>new Map(l.map((it,i)=>[it.d.UNITID,i])));
+  svg.attr("width",L.W).attr("height",H).attr("aria-label",`Ranking of ${left.length} schools on the left. To the right, one column per variable shows the same ${R.mode==="all"?"top schools of all ranked schools":"schools"} sorted by that variable, with bars in real values.`);
+  for(const c of ["links","med","cells","left","sep"])if(svg.select("g."+c).empty())svg.append("g").attr("class",c);
+  const anim=R.animate&&!reduced; R.animate=false; const T=s=>anim?s.transition().duration(380):s;
+  // curves between consecutive columns
+  const links=[]; lists.forEach((l,j)=>{ const pm=j?P[j-1]:P0,x1=L.LW+j*L.cw,x2=L.x0(j); for(const it of l){ const id=it.d.UNITID,a=pm.get(id); if(a==null)continue; links.push({key:id+"|"+j,id,it,d:`M${x1},${a*RH+(j?18:RH/2)}C${(x1+x2)/2},${a*RH+(j?18:RH/2)} ${(x1+x2)/2},${P[j].get(id)*RH+18} ${x2},${P[j].get(id)*RH+18}`}); } });
+  const lg=svg.select("g.links").selectAll("path.ln").data(links,o=>o.key).join(e=>e.append("path").attr("class","ln").attr("fill","none").attr("d",o=>o.d).style("pointer-events","none"));
+  T(lg).attr("d",o=>o.d);
+  // columns: label (real value) on top, bar underneath, dashed median of all ranked schools
+  const cells=[]; lists.forEach((l,j)=>l.forEach((it,i)=>cells.push({key:it.d.UNITID+"|"+j,id:it.d.UNITID,it,j,y:i*RH})));
+  const cg=svg.select("g.cells").selectAll("g.cell").data(cells,o=>o.key).join(e=>{ const g=e.append("g").attr("class","cell").attr("transform",o=>`translate(${L.x0(o.j)},${o.y})`);
+      g.append("rect").attr("class","band").attr("x",-4).attr("y",1).attr("height",RH-2).attr("rx",3); g.append("text").attr("class","val").attr("y",11).style("font-size","10.5px").style("font-family","var(--mono)");
+      g.append("rect").attr("class","trk").attr("y",14).attr("height",9).attr("fill","var(--soft)"); g.append("rect").attr("class","bar").attr("y",14).attr("height",9); return g});
+  T(cg).attr("transform",o=>`translate(${L.x0(o.j)},${o.y})`);
+  cg.select("rect.band").attr("width",L.tw+8); cg.select("rect.trk").attr("width",L.tw);
+  cg.select("text.val").text(o=>rkFmt(R.cols[o.j].k,o.it.d[R.cols[o.j].k])).attr("x",0);
+  cg.select("rect.bar").attr("fill",o=>R.cols[o.j].color).attr("width",o=>{const c=R.cols[o.j],s=rkStat(c.k); return Math.max(1.5,Math.min(1,o.it.d[c.k]/(s.hi||1))*L.tw)});
+  cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.cols[o.j],it=o.it,d=it.d; let h=rkTip(it); h=h.replace("<br><i>",`<br><b>${esc(RKA.get(c.k).short)}</b>: ${rkFmt(c.k,d[c.k])} (${c.dir>0?"highest":"lowest"} is best)<br><i>`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
+  const mg=svg.select("g.med"); mg.selectAll("*").remove();
+  R.cols.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+Math.min(1,med/(s.hi||1))*L.tw;
+    mg.append("line").attr("x1",x).attr("x2",x).attr("y1",0).attr("y2",H-4).attr("stroke","var(--muted)").attr("stroke-dasharray","3 3").attr("stroke-opacity",.6).style("pointer-events","none").append("title").text(`Median of the ${R.items.length} ranked schools: ${rkFmt(c.k,med)}`); });
+  // left block: the LineUp-style ranking
+  const rg=svg.select("g.left").selectAll("g.row").data(left,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row").attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`); g.append("rect").attr("class","hit").attr("height",RH-2); g.append("text").attr("class","chg").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").style("pointer-events","none"); g.append("path").attr("class","tdot").style("pointer-events","none"); g.append("text").attr("class","nmx").style("font-size","12.5px").style("pointer-events","none"); g.append("g").attr("class","stack").style("pointer-events","none"); g.append("text").attr("class","sc").style("font-size","11px").style("font-family","var(--mono)").style("pointer-events","none"); return g});
+  T(rg).attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`);
+  rg.select("rect.hit").attr("x",2).attr("y",1).attr("width",L.LW-4).attr("rx",3);
+  rg.select("text.rk").attr("x",L.nameX-22).attr("y",18).style("fill","var(--muted)").text(it=>it.rank);
+  rg.select("path.tdot").attr("transform",`translate(${L.nameX-10},14)`).attr("d",it=>rkSymPath(it.d.Control)).attr("fill",it=>COLORS[it.d.Control]);
   const age=performance.now()-(R.chgT||0), live=!!R.chg&&(reduced||age<3600), dOf=it=>live&&R.chg.get(it.d.UNITID)||0, fade=reduced?1:age<1200?1:Math.max(0,1-(age-1200)/2200);
-  const cg=rg.select("text.chg").interrupt().attr("x",2).attr("y",14).text(it=>{const d=dOf(it);return d?(d>0?"▲":"▼")+Math.abs(d):""}).style("fill",it=>dOf(it)>0?"var(--up)":"var(--dn)").attr("fill-opacity",it=>Math.min(1,.5+Math.abs(dOf(it))/25)*fade);
-  if(live&&!reduced&&fade>0)cg.transition().duration(Math.max(0,3400-age)).ease(d3.easeLinear).attr("fill-opacity",0);
-  rg.select("text.nmx").attr("x",L.nameX).attr("y",14).attr("fill","var(--fg)").style("font-weight",it=>it.d.UNITID===foc?700:400).text(it=>{const m=Math.floor(L.nameW/6.6);return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
+  const ch=rg.select("text.chg").interrupt().attr("x",2).attr("y",18).text(it=>{const d=dOf(it);return d?(d>0?"▲":"▼")+Math.abs(d):""}).style("fill",it=>dOf(it)>0?"var(--up)":"var(--dn)").attr("fill-opacity",it=>Math.min(1,.5+Math.abs(dOf(it))/25)*fade);
+  if(live&&!reduced&&fade>0)ch.transition().duration(Math.max(0,3400-age)).ease(d3.easeLinear).attr("fill-opacity",0);
+  rg.select("text.nmx").attr("x",L.nameX).attr("y",18).text(it=>{const m=Math.floor(L.nameW/6.6);return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
   rg.each(function(it){ const sg=d3.select(this).select("g.stack"); let x=L.barX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.bw,c:R.cols[i]};x+=o.w;return o});
-    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",3).attr("height",RK_H-6).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("stroke","var(--panel)").attr("stroke-width",.6);
-    d3.select(this).select("text.sc").attr("x",x+5).attr("y",14).text(Math.round(it.score*100)); });
+    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",7).attr("height",RH-14).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("stroke","var(--panel)").attr("stroke-width",.6);
+    d3.select(this).select("text.sc").attr("x",L.scX).attr("y",18).style("fill","var(--muted)").text(Math.round(it.score*100)); });
   rg.on("mousemove",function(e,it){ rkHover(it.d.UNITID); const [px]=d3.pointer(e,svg.node()); let x=L.barX,idx=-1; for(let i=0;i<it.parts.length;i++){const w=it.parts[i]*L.bw; if(px>=x&&px<x+w){idx=i;break} x+=w}
-      const d=it.d,cs=R.cols; let html=`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>Rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100`;
-      if(idx>=0){const c=cs[idx]; html+=`<br><b>${esc(RKA.get(c.k).short)}</b>: ${rkFmt(c.k,d[c.k])} → ${(rkNorm(c,d[c.k])*100).toFixed(0)}/100 × weight ${Math.round(c.w*100)}% = ${(it.parts[idx]*100).toFixed(1)} points`;}
-      else html+="<br>"+cs.map(c=>`${esc(RKA.get(c.k).short)}: ${rkFmt(c.k,d[c.k])}`).join("<br>"); html+=`<br><i>Click to follow this school</i>`; showTip(e,html);})
-    .on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,it)=>{S.focus=S.focus===it.d.UNITID?null:it.d.UNITID; renderRankBody();});
-  // frozen rows
-  const fg=svg.selectAll("g.frow").data(fro,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","frow").attr("transform",it=>`translate(0,${it.pos*RK_H})`); g.append("text").attr("class","dl"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").attr("fill","var(--muted)"); g.append("text").attr("class","nmx").style("font-size","12px"); g.append("g").attr("class","stack"); return g});
-  (anim?fg.transition().duration(380):fg).attr("transform",it=>`translate(0,${it.pos*RK_H})`); fg.select("text.rk").attr("x",L.rX+L.rankW2).attr("y",14).text(it=>it.rank);
-  const rnow=new Map(R.items.map(it=>[it.d.UNITID,it.rank]));
-  fg.select("text.dl").attr("x",L.rX+4).attr("y",14).attr("text-anchor","start").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none")
-    .style("fill",it=>{const n=rnow.get(it.d.UNITID);return n==null||n===it.rank?"none":it.rank>n?"var(--up)":"var(--dn)"}).text(it=>{const n=rnow.get(it.d.UNITID);if(n==null||n===it.rank)return"";const d=it.rank-n;return(d>0?"▲":"▼")+Math.abs(d)});
-  fg.select("text.nmx").attr("x",L.rnameX).attr("y",14).attr("fill","var(--fg)").style("font-weight",it=>it.d.UNITID===foc?700:400).text(it=>{const m=Math.floor(L.nameW2/6.2),t=it.d.INSTNM;return t.length>m?t.slice(0,m-1)+"…":t});
-  fg.each(function(it){ let x=L.sbarX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.sbw,c:sn.cols[i]};x+=o.w;return o});
-    d3.select(this).select("g.stack").selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",3).attr("height",RK_H-6).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("fill-opacity",.85).attr("stroke","var(--panel)").attr("stroke-width",.6)});
-  fg.style("cursor","pointer").on("mousemove",(e,it)=>{rkHover(it.d.UNITID); showTip(e,`<b>${esc(it.d.INSTNM)}</b><br>${esc(it.d.CITY)}, ${esc(it.d.STABBR)} · ${esc(it.d.Control)}<br>Second ranking: rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100<br><i>Click to follow this school</i>`)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,it)=>{S.focus=S.focus===it.d.UNITID?null:it.d.UNITID; renderRankBody();});
-  // slope lines: full lines when both ends are in view, arrow stubs (with the rank difference) when the other end is off-screen
-  const idxNow=new Map(R.items.map((it,i)=>[it.d.UNITID,i])),vis=new Set(); cur.forEach(it=>vis.add(it.d.UNITID)); fro.forEach(it=>vis.add(it.id));
-  const fEnd=Math.min(end,sn?sn.items.length:0), full=[], stubs=[];
-  if(sn)for(const id of vis){const i=idxNow.get(id),j=sn.idx.get(id); if(i==null||j==null)continue; const dr=sn.items[j].rank-R.items[i].rank,inL=i>=start&&i<end,inR=j>=start&&j<fEnd;
-    if(inL&&inR)full.push({id,i,j,dr}); else if(inL)stubs.push({id,dr,side:"L",y:i*RK_H+RK_H/2,dir:j<start?-1:1}); else if(inR)stubs.push({id,dr,side:"R",y:j*RK_H+RK_H/2,dir:i<start?-1:1})}
-  const col=l=>l.dr>0?"var(--up)":l.dr<0?"var(--dn)":"#bdbdbd", x0=L.barX+L.bw+36, x1=L.rX-2, mx=L.slopeX+L.slopeW*.5;
-  const pd=l=>`M${x0},${l.i*RK_H+RK_H/2}C${mx},${l.i*RK_H+RK_H/2} ${mx},${l.j*RK_H+RK_H/2} ${x1},${l.j*RK_H+RK_H/2}`;
-  const ps=svg.selectAll("path.slope").data(full,l=>l.id).join(e=>e.append("path").attr("class","slope").attr("fill","none").style("pointer-events","none").attr("d",pd));
-  (anim?ps.transition().duration(380):ps).attr("d",pd);
-  ps.attr("stroke",col).attr("stroke-opacity",l=>l.id===foc?1:.55).attr("stroke-width",l=>l.id===foc?3:1.2);
-  ps.filter(l=>l.id===foc).raise();
-  const sg=svg.selectAll("g.stub").data(stubs,l=>l.id+l.side).join(e=>{const g=e.append("g").attr("class","stub").style("pointer-events","none"); g.append("path").attr("class","sl"); g.append("path").attr("class","ah"); g.append("text").attr("class","st"); return g});
-  sg.each(function(l){ const g=d3.select(this),sx=l.side==="L"?x0:x1,ex=l.side==="L"?x0+22:x1-22,ey=l.y+l.dir*11,c=col(l),vx=l.side==="L"?1:-1,vy=l.dir*.5,vl=Math.hypot(vx,vy),ux=vx/vl,uy=vy/vl;
-    g.select("path.sl").attr("d",`M${sx},${l.y}L${ex},${ey}`).attr("fill","none").attr("stroke",c).attr("stroke-width",l.id===foc?3:1.4).attr("stroke-opacity",l.id===foc?1:.8);
-    g.select("path.ah").attr("d",`M${ex+ux*6},${ey+uy*6}L${ex-uy*3.5},${ey+ux*3.5}L${ex+uy*3.5},${ey-ux*3.5}Z`).attr("fill",c).attr("stroke","none");
-    g.select("text.st").attr("x",l.side==="L"?ex+9:ex-9).attr("y",ey+(l.dir>0?9:-2)).attr("text-anchor",l.side==="L"?"start":"end").style("font-size","10px").style("font-weight",700).style("font-family","var(--mono)").style("fill",c).text(l.side==="L"&&l.dr?`${l.dir<0?"↑":"↓"} ${l.dr>0?"▲":"▼"}${Math.abs(l.dr)}`:""); });
-  rkMapRings();
+      let html=rkTip(it); if(idx>=0){const c=R.cols[idx],d=it.d; html=html.replace("<br><i>",`<br><b>${esc(RKA.get(c.k).short)}</b> → ${(rkNorm(c,d[c.k])*100).toFixed(0)}/100 × weight ${Math.round(c.w*100)}% = ${(it.parts[idx]*100).toFixed(1)} points<br><i>`)} showTip(e,html);})
+    .on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,it)=>rkPin(it.d.UNITID));
+  const sp=svg.select("g.sep"); sp.selectAll("*").remove(); if(extra.length){ const y=top.length*RH; sp.append("line").attr("x1",4).attr("x2",L.LW-4).attr("y1",y).attr("y2",y).attr("stroke","var(--muted)").attr("stroke-dasharray","2 3"); }
+  rkFigStyle();
 }
-/* map beside the ranking: dots = schools that pass the filters, drag a rectangle to rank only the schools inside it */
-function rkHover(id){ const R=S.rank; if(R.hov===id)return; R.hov=id; rkMapRings(); }
-function rkMapRings(){ const R=S.rank; if(R.right!=="map"||!R.pos)return; const set=(cls,id)=>{const p=id!=null?R.pos.get(id):null; d3.select("#rkMap circle."+cls).style("display",p?null:"none").attr("cx",p?p[0]:0).attr("cy",p?p[1]:0)}; set("ringf",S.focus); set("ringh",R.hov); }
+function rkFigStyle(){
+  const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,on=id=>pins.has(id)||id===h;
+  svg.selectAll("path.ln").attr("stroke",o=>o.id===h?"var(--median)":pins.has(o.id)?COLORS[o.it.d.Control]:"var(--muted)").attr("stroke-width",o=>o.id===h?3:pins.has(o.id)?2.4:1).attr("stroke-opacity",o=>on(o.id)?1:any?.2:.45).filter(o=>on(o.id)).raise();
+  svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.4:1);
+  svg.selectAll("rect.band").attr("fill",o=>on(o.id)?"var(--soft)":"transparent").attr("stroke",o=>pins.has(o.id)?"var(--median)":"none");
+  svg.selectAll("rect.hit").attr("fill",it=>on(it.d.UNITID)?"var(--soft)":"transparent").attr("stroke",it=>pins.has(it.d.UNITID)?"var(--median)":"none").style("cursor","pointer");
+  svg.selectAll("text.nmx").style("font-weight",it=>pins.has(it.d.UNITID)?700:400);
+  svg.selectAll("g.row").style("opacity",it=>any&&!on(it.d.UNITID)?.65:1);
+}
+function rkHover(id){ const R=S.rank; if(R.hov===id)return; R.hov=id; rkMapRings(); rkFigStyle(); }
+function rkMapRings(){ const R=S.rank; if(!R.pos||!R.mapW)return; const p=R.hov!=null?R.pos.get(R.hov):null; d3.select("#rkMap circle.ringh").style("display",p?null:"none").attr("cx",p?p[0]:0).attr("cy",p?p[1]:0); }
 function rkMapClearBrush(){ const R=S.rank; if(R.mapG&&R.brush)R.mapG.call(R.brush.move,null); }
-function rkScrollTo(id){ const R=S.rank,i=R.items.findIndex(it=>it.d.UNITID===id); if(i>=0)$("rkBody").scrollTop=Math.max(0,i*RK_H-RK_BODY/2); }
 function rkMapNear(ev){ const R=S.rank; if(!R.qt)return null; const [x,y]=d3.pointer(ev,d3.select("#rkMap svg").node()); return R.qt.find(x,y,9); }
-function rkMapPick(d){ S.focus=d.UNITID; rkScrollTo(d.UNITID); renderRankBody(); }
 function rkMapBuild(){
   const R=S.rank,host=$("rkMap"),W=Math.max(260,Math.round(host.clientWidth)),H=Math.round(W*.62);
-  if(R.mapW===W&&host.firstChild)return false;
-  host.innerHTML=""; R.mapW=W; R.geoBox=null;
-  const proj=d3.geoAlbersUsa().fitExtent([[4,4],[W-4,H-4]],states),path=d3.geoPath(proj);
-  const svg=d3.select(host).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label","Map of the ranked schools. Drag a rectangle to rank only the schools inside it.").style("overflow","hidden");
+  const key=W+"|"+R.area; if(R.mapKey===key&&host.firstChild)return false;
+  host.innerHTML=""; R.mapW=W; R.mapKey=key; R.geoBox=null;
+  const proj=d3.geoAlbersUsa().fitExtent([[4,4],[W-4,H-4]],rkAreaFeatures()),path=d3.geoPath(proj);
+  const svg=d3.select(host).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label","Map of the ranked schools. Highlighted schools are large and numbered. Drag a rectangle to rank only the schools inside it.").style("overflow","hidden");
   svg.append("g").selectAll("path").data(states.features).join("path").attr("d",path).attr("fill","var(--sgrey)").attr("stroke","var(--panel)").attr("stroke-width",.8);
   R.pos=new Map(); for(const d of rows){ if(d.LATITUDE==null||d.LONGITUDE==null)continue; const p=proj([d.LONGITUDE,d.LATITUDE]); if(p)R.pos.set(d.UNITID,p); }
   svg.append("g").attr("class","dots").style("pointer-events","none");
   R.brush=d3.brush().extent([[0,0],[W,H]]).on("brush end",e=>{ if(!e.sourceEvent)return; const s=e.selection,pv=R.geoBox,same=!!(s&&pv&&s.flat().every((v,i)=>Math.abs(v-pv.flat()[i])<.5));
-    if(e.type==="end"&&(!s||same)){ const o=rkMapNear(e.sourceEvent); if(o){ rkMapPick(o.d); if(!s&&pv)R.mapG.call(R.brush.move,pv); return; } if(same)return; }
+    if(e.type==="end"&&(!s||same)){ const o=rkMapNear(e.sourceEvent); if(o){ rkPin(o.d.UNITID); if(!s&&pv)R.mapG.call(R.brush.move,pv); return; } if(same)return; }
     R.geoBox=s?[[s[0][0],s[0][1]],[s[1][0],s[1][1]]]:null; rkUpdate(false,{track:false}); });
   R.mapG=svg.append("g").attr("class","brush").call(R.brush);
-  R.mapG.selectAll(".overlay,.selection").style("cursor","crosshair").on("mousemove.tip",function(e){ const o=rkMapNear(e); if(o){ const it=S.rank.items.find(x=>x.d.UNITID===o.d.UNITID),d=o.d; showTip(e,`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}${it?`<br>Rank ${it.rank} · score ${(it.score*100).toFixed(1)} of 100`:"<br>Outside the map selection"}<br><i>Click to jump to this school in the list</i>`); rkHover(d.UNITID); } else { hideTip(); rkHover(null); } }).on("mouseleave.tip",()=>{hideTip();rkHover(null)});
-  for(const c of ["ringh","ringf"])svg.append("circle").attr("class",c).attr("r",c==="ringf"?10:8).attr("fill","none").attr("stroke","var(--median)").attr("stroke-width",c==="ringf"?2.6:1.6).style("display","none").style("pointer-events","none");
+  R.mapG.selectAll(".overlay,.selection").style("cursor","crosshair").on("mousemove.tip",function(e){ const o=rkMapNear(e); if(o){ const it=S.rank.items.find(x=>x.d.UNITID===o.d.UNITID),d=o.d; showTip(e,it?rkTip(it):`<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)}<br>Outside the map selection`); rkHover(d.UNITID); } else { hideTip(); rkHover(null); } }).on("mouseleave.tip",()=>{hideTip();rkHover(null)});
+  svg.append("g").attr("class","hi").style("pointer-events","none");
+  svg.append("circle").attr("class","ringh").attr("r",11).attr("fill","none").attr("stroke","var(--median)").attr("stroke-width",2.2).style("display","none").style("pointer-events","none");
   return true;
 }
 function rkMapUpdate(){
-  const R=S.rank; if(R.right!=="map")return;
+  const R=S.rank,host=$("rkMap"); if(!host||!host.clientWidth)return;
   const had=!!R.geoBox; if(rkMapBuild()&&had){ rkUpdate(false,{track:false}); return; }
-  const pop=rkRank(R.cols,true),byId=new Map(R.items.map(it=>[it.d.UNITID,it])),pts=[];
-  const dat=pop.filter(it=>R.pos.has(it.d.UNITID)).map(it=>{const p=R.pos.get(it.d.UNITID),r=byId.get(it.d.UNITID); const o={id:it.d.UNITID,d:it.d,x:p[0],y:p[1],r:r&&r.rank<=25?5.5:r?2.8:1.8,ins:!!r,top:!!(r&&r.rank<=25)}; pts.push(o); return o});
+  const pop=rkRank(R.cols,true),inIt=new Set(R.items.map(it=>it.d.UNITID)),pts=[];
+  const dat=pop.filter(it=>R.pos.has(it.d.UNITID)).map(it=>{const p=R.pos.get(it.d.UNITID),ins=inIt.has(it.d.UNITID),o={id:it.d.UNITID,d:it.d,x:p[0],y:p[1],ins}; pts.push(o); return o});
   R.qt=d3.quadtree().x(o=>o.x).y(o=>o.y).addAll(pts);
-  const rz=o=>o.top?2:o.ins?1:0;
-  d3.select("#rkMap g.dots").selectAll("circle").data(dat,o=>o.id).join("circle").attr("cx",o=>o.x).attr("cy",o=>o.y).attr("r",o=>o.r).attr("fill",o=>o.ins?COLORS[o.d.Control]:"var(--muted)").attr("fill-opacity",o=>o.ins?.85:.3).attr("stroke",o=>o.top?"var(--panel)":"none").attr("stroke-width",.9).sort((a,b)=>rz(a)-rz(b));
-  $("rkMapLg").innerHTML=Object.entries(COLORS).map(([k,c])=>`<span><i style="background:${c}"></i>${k}</span>`).join("")+`<span><i style="background:var(--dot);border-radius:50%;width:11px;height:11px"></i>large = top 25 on the left</span>`;
-  $("rkMapNote").textContent=R.geoBox?`${R.items.length.toLocaleString("en-US")} of ${pop.length.toLocaleString("en-US")} ranked schools are inside your rectangle and are ranked among themselves; grey dots are outside it. Schools outside the 50 states and DC are not on the map and are left out while a rectangle is active.`:"Drag a rectangle on the map to rank only the schools inside it. Hover a row to find its dot; click a dot to jump to its row.";
+  const svg=d3.select("#rkMap svg");
+  svg.select("g.dots").selectAll("circle").data(dat,o=>o.id).join("circle").attr("cx",o=>o.x).attr("cy",o=>o.y).attr("r",o=>o.ins?2.3:1.6).attr("fill",o=>o.ins?COLORS[o.d.Control]:"var(--muted)").attr("fill-opacity",o=>o.ins?.55:.3);
+  const hi=rkHi().filter(it=>R.pos.has(it.d.UNITID)),gh=svg.select("g.hi");
+  const hg=gh.selectAll("g.h").data(hi,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","h"); g.append("circle"); g.append("text"); return g});
+  hg.attr("transform",it=>{const p=R.pos.get(it.d.UNITID);return `translate(${p[0]},${p[1]})`});
+  hg.select("circle").attr("r",8).attr("fill",it=>COLORS[it.d.Control]).attr("stroke","var(--panel)").attr("stroke-width",1.5);
+  hg.select("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",hi.length>9?8:9).attr("font-weight",700).attr("fill","#fff").style("font-family","var(--mono)").text(it=>it.rank);
+  $("rkMapLg").innerHTML=legendHTML()+`<span><i style="background:var(--dot);border-radius:50%;width:12px;height:12px"></i>numbered = highlighted</span>`;
+  $("rkMapNote").textContent=R.geoBox?`${R.items.length.toLocaleString("en-US")} of ${pop.length.toLocaleString("en-US")} ranked schools are inside your rectangle and are ranked among themselves; grey dots are outside it. Schools outside the 50 states and DC are not on the map and are left out while a rectangle is active.`:"Drag a rectangle on the map to rank only the schools inside it. Click a dot to pin or unpin a school.";
   $("rkGeoClear").style.display=R.geoBox?null:"none"; rkMapRings();
 }
+function rkFillField(){ const R=S.rank,s=$("rkField"); s.innerHTML=""; const add=(k,l)=>{const e=document.createElement("option");e.value=k;e.textContent=l;s.appendChild(e)};
+  add("",R.group?"All fields in this group: largest program per school":"Any field: school-level numbers"); FIELDOPTS.filter(o=>!R.group||o.grp===R.group).sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,o.label)); s.value=R.field; }
+function rkSyncControls(){ const R=S.rank,fm_=v=>"$"+d3.format(",")(Math.round(v)),mode=R.field||R.group;
+  $("rkEarnLab").textContent=mode?"Min. earnings, program 5 yrs after":"Min. earnings, school 10 yrs after"; $("rkEarn").value=R.minE; $("rkEarnOut").textContent=R.minE>0?fm_(R.minE):"no minimum";
+  const mx=RK_CAPMAX.get(R.costVar); $("rkCap").max=mx; $("rkCap").value=R.cap; $("rkCapOut").textContent=R.cap>=mx?"no limit":fm_(R.cap); $("rkCost").value=R.costVar; $("rkAcad").checked=R.acad; $("rkGroup").value=R.group; $("rkType").value=R.type; $("rkArea").value=R.area; $("rkRows").value=R.nrows; $("rkRowsOut").textContent=R.nrows; $("rkModeA").setAttribute("aria-pressed",R.mode==="same"); $("rkModeB").setAttribute("aria-pressed",R.mode==="all"); }
+function rkSetCost(v){ const R=S.rank,i=R.cols.findIndex(c=>c.k===R.costVar);
+  if(i>=0&&!R.cols.some(c=>c.k===v)){ const c=R.cols[i]; delete R.ranges[c.k]; R.cols[i]={k:v,w:c.w,dir:RKA.get(v).dir,color:c.color}; }
+  R.costVar=v; R.cap=RK_CAPMAX.get(v); R.animate=true; rkFillAdd(); }
+function rkAreaFeatures(){ const a=S.rank.area; if(!a)return states; const v=a.slice(2),f=states.features.filter(g=>a[0]==="R"?regionOf(g)===v:fipsToAbbr.get(+g.id)===v); return f.length?{type:"FeatureCollection",features:f}:states; }
+function rkFillArea(){ const s=$("rkArea"),add=(p,v,l)=>{const e=document.createElement("option");e.value=v;e.textContent=l;p.appendChild(e)};
+  add(s,"","Whole U.S."); const g1=document.createElement("optgroup"); g1.label="Scorecard regions"; REGIONS.forEach(r=>add(g1,"R:"+r,r)); s.appendChild(g1);
+  const g2=document.createElement("optgroup"); g2.label="States"; [...new Set(rows.map(d=>d.STABBR))].sort((a,b)=>(RK_STN[a]||a).localeCompare(RK_STN[b]||b)).forEach(a=>add(g2,"S:"+a,RK_STN[a]||a)); s.appendChild(g2); s.value=S.rank.area; }
 function rkSetup(){
   fillSelect("rkType",[["All","All school types"],["Public","Public"],["Private nonprofit","Private nonprofit"],["Private for-profit","Private for-profit"]],"All",v=>{S.rank.type=v; rkUpdate(false,{track:false})});
-  fillSelect("rkRight",[["rank2","the second ranking"],["map","a map"]],"rank2",v=>{const R=S.rank; R.right=v; $("rkMapBox").hidden=v!=="map"; if(v!=="map"){R.geoBox=null; R.mapW=0; R.hov=null; $("rkMap").innerHTML=""} rkUpdate(true,{track:false})});
+  fillSelect("rkCost",RK_COSTS,"Tuition_out_of_state",v=>{rkSetCost(v); rkUpdate(true,{animate:true})});
+  (()=>{ const s=$("rkGroup"),add=(k,l)=>{const e=document.createElement("option");e.value=k;e.textContent=l;s.appendChild(e)}; add("","All broad fields"); GROUPS.forEach(([g])=>add(g,`${g} (${FIELDOPTS.filter(o=>o.grp===g).length} fields)`));
+    s.addEventListener("change",()=>{const R=S.rank; R.group=s.value; if(R.field&&!FIELDOPTS.some(o=>o.c===R.field&&(!R.group||o.grp===R.group)))R.field=""; rkFillField(); rkApplyField(); rkUpdate(true,{track:false}); rkSyncControls();});
+    rkFillField(); $("rkField").addEventListener("change",e=>{S.rank.field=e.target.value; rkApplyField(); rkUpdate(true,{track:false}); rkSyncControls();}); })();
+  rkFillArea(); $("rkArea").addEventListener("change",e=>{S.rank.area=e.target.value; rkUpdate(false,{track:false})});
+  $("rkEarn").addEventListener("input",e=>{S.rank.minE=+e.target.value; $("rkEarnOut").textContent=S.rank.minE>0?"$"+d3.format(",")(S.rank.minE):"no minimum"; later(()=>rkUpdate(false,{track:false}))});
+  $("rkCap").addEventListener("input",e=>{const R=S.rank; R.cap=+e.target.value; $("rkCapOut").textContent=R.cap>=RK_CAPMAX.get(R.costVar)?"no limit":"$"+d3.format(",")(R.cap); later(()=>rkUpdate(false,{track:false}))});
+  $("rkAcad").addEventListener("change",e=>{S.rank.acad=e.target.checked; rkUpdate(true,{track:false})});
+  $("rkRows").addEventListener("input",e=>{S.rank.nrows=+e.target.value; $("rkRowsOut").textContent=S.rank.nrows; later(()=>{renderRankBody(); rkLinked(true)})});
+  for(const [id,m] of [["rkModeA","same"],["rkModeB","all"]])$(id).addEventListener("click",()=>{ S.rank.mode=m; S.rank.animate=true; rkSyncControls(); renderRankBody(); rkLinked(true) });
+  $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; renderRankBody(); rkLinked(true)});
   $("rkGeoClear").addEventListener("click",()=>{S.rank.geoBox=null; rkMapClearBrush(); rkUpdate(false,{track:false})});
   $("rkAdd").addEventListener("change",e=>rkAdd(e.target.value));
-  $("rkFreeze").addEventListener("click",()=>{rkFreeze();S.rank.animate=true;renderRankHeader();renderRankBody()});
   $("rkReset").addEventListener("click",()=>{const n=S.rank.cols.length; S.rank.cols.forEach(c=>c.w=1/n); rkUpdate(true,{animate:true})});
-  $("rkClear").addEventListener("click",()=>{S.rank.geoBox=null; rkMapClearBrush(); S.rank.ranges={}; S.rank.q=""; S.rank.type="All"; $("rkQ").value=""; $("rkType").value="All"; rkUpdate(true,{track:false})});
+  $("rkClear").addEventListener("click",()=>{const R=S.rank; R.geoBox=null; rkMapClearBrush(); R.ranges={}; R.q=""; R.type="All"; R.group=""; R.field=""; R.area=""; R.minE=0; R.cap=RK_CAPMAX.get(R.costVar); rkApplyField(); rkFillField(); $("rkQ").value=""; rkSyncControls(); rkUpdate(true,{track:false})});
   $("rkQ").addEventListener("input",e=>{S.rank.q=e.target.value; later(()=>rkUpdate(false,{track:false}))});
-  $("rkBody").addEventListener("scroll",()=>later(renderRankBody),{passive:true});
   rkFillAdd();
 }
 function renderRank(){
-  $("rkMapBox").hidden=S.rank.right!=="map";
-  $("rkLg").style.display=S.rank.right==="map"?"none":null;
-  if(!S.rank.items.length&&!S.rank.snap){rkCompute(false); rkFreeze();}
-  else rkCompute(false);
-  $("tR").textContent="Rank schools: build two rankings and compare them (what if I weight things differently?)";
-  INFO.R="Each row is a school. The coloured bar is its score: every column adds points, and a column's width in the header is its weight (the five start equal; the percentage is shown on top, double-click it or press Enter on it to type an exact value). Drag the divider between two columns to move weight from one to the other, flip ↑/↓ if lower values should count as better (for example net price, debt), or add and remove columns. Each value is first rescaled from 0 (the lowest value among all schools) to 100 (the highest), so a column's points = weight × rescaled value; the rescaling is a simple min–max, so a few extreme schools stretch it. Histograms in the headers show how the schools are spread on that column (left = worse, right = better); drag on one to keep only schools in that range. Only schools with all chosen values are ranked, so choosing a sparse column (default rate, SAT) shrinks the list. The right-hand ranking is a second ranking you can edit in the same way (drag its dividers, double-click its percentages, flip its arrows); it starts as a copy of the left one, and 'Copy to second ranking' copies the left one again. It keeps its own columns, so add or remove columns on the left, then copy. Both rankings use the same filters. The lines compare them: blue = the school is ranked higher on the left than on the right, red = lower, grey = same; ▲/▼ with a number = how many places (also shown beside the right-hand rank); an arrow stub means the other end is above or below what you see. After you change the left weights, the rank labels on the far left briefly show ▲/▼ and how many places each school moved, then fade. 'Right side shows: a map' replaces the second ranking with a map of the schools (colour = school type, large dots = the top 25 on the left). Hover a row to ring its dot, click a dot to jump to its row, and drag a rectangle to rank only the schools inside it (the weights and the rescaling stay the same; only who is ranked changes). This is not an official ranking: the weights are your choice, the data cover students who received federal aid, and the order can change a lot with the weights. Idea and layout after LineUp (Gratzl et al., 2013).";
-  $("rkMapBox").hidden=S.rank.right!=="map"; $("rkRight").value=S.rank.right;
-  rkFillAdd(); renderRankHeader(); renderRankBody(); rkCount(); rkMapUpdate();
+  const R=S.rank; rkCompute(false);
+  $("tR").textContent="Hard filters"; $("tRM").textContent="Where the schools are"; $("tRL").textContent="Choose a school: ranking and real values in one figure";
+  $("sRL").textContent="Left: schools ranked by your weights. Right: the same schools sorted by each variable (grey lines show how a school moves); number above the bar = real value, bar starts at zero, dashed line = median of all ranked schools.";
+  INFO.R="Pretend you are a student from abroad choosing a U.S. school. The panel on the left sets the hard filters: only schools in the region or state you choose, that offer the chosen field (largest program per school when you pick a broad field), earn at least your minimum and cost at most your maximum are ranked at all. International students cannot use U.S. federal aid or loans, so the default cost is out-of-state tuition (what you would pay); cost of attendance and net price are available too, but net price only describes students with U.S. federal aid. With a field chosen, the minimum earnings apply to that program (5 years after completing), otherwise to the school's earnings 10 years after entry. The figure combines a LineUp-style ranking with a slope graph: on the left each row is a school, the coloured bar is its score and a segment's width is its weight (drag a divider, or double-click a percentage and type a value). To the right there is one column per variable. In 'Same schools, re-sorted' the column shows the same schools sorted by that variable, so the grey line from one column to the next shows how much a school moves; in 'All schools in the ranking' the column shows the best schools of all ranked schools on that variable alone. In every cell the number above the bar is the real value and the bar (starting at zero, same scale for all schools) shows how large it is, so you can see how much a rank difference means in dollars or percent. The small histogram under each variable shows all schools; drag on it to keep only schools in that range. Click a school anywhere (row, bar, dot on the map) to pin it (up to 10): its lines turn coloured and the rest fades. The map shows pinned schools (or the top 8) as numbered dots; drag a rectangle to rank only the schools inside it. This is not an official ranking: the weights are your choice, and only schools with a value for every chosen variable are ranked.";
+  rkSyncControls(); rkFillAdd(); renderRankHeader(); renderRankBody(); rkCount(); rkLinked(false);
 }
 rkSetup();
 
