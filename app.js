@@ -105,7 +105,7 @@ const RK_STN={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California
 const RK_COSTS=[["Tuition_out_of_state","Tuition, out-of-state"],["Cost_of_attendance","Cost of attendance"],["Net_price","Net price (federal aid)"]];
 const RK_CAPMAX=new Map(RK_COSTS.map(([k])=>[k,Math.ceil(d3.max(rows,d=>d[k])/5000)*5000]));
 S.rank={cols:DEFAULT_VARIABLES.map((k,i)=>({k,imp:5,w:.2,dir:RKA.get(k).dir,color:RK_COL[i]})),type:"All",q:"",ranges:{},items:[],lastRank:new Map(),chg:null,chgT:0,animate:false,
-  geoBox:null,pos:null,hov:null,mapW:0,group:"",field:"",minE:0,costVar:"Tuition_out_of_state",cap:RK_CAPMAX.get("Tuition_out_of_state"),fieldSet:null,fieldE:null,pins:[],acad:false,region:"",state:"",nrows:18,mode:"same"};
+  geoBox:null,pos:null,hov:null,mapW:0,group:"",field:"",minE:0,costVar:"Tuition_out_of_state",cap:RK_CAPMAX.get("Tuition_out_of_state"),fieldSet:null,fieldE:null,pins:[],acad:false,region:"",state:"",nrows:15,mode:"same"}; // fixed: always 15 rows, and every column re-sorts those same schools
 const rkInBox=d=>{const b=S.rank.geoBox,p=S.rank.pos&&S.rank.pos.get(d.UNITID); return !!p&&p[0]>=b[0][0]&&p[0]<=b[1][0]&&p[1]>=b[0][1]&&p[1]<=b[1][1]};
 function rkRank(cols,skipGeo){
   const R=S.rank,q=R.q.trim().toLowerCase(),rk=Object.entries(R.ranges),items=[],capMax=RK_CAPMAX.get(R.costVar);
@@ -273,7 +273,7 @@ function rkMapBuild(){
   const key=W+"|"+R.region+"|"+R.state; if(R.mapKey===key&&host.firstChild)return false;
   host.innerHTML=""; R.mapW=W; R.mapKey=key; R.geoBox=null;
   const proj=d3.geoAlbersUsa().fitExtent([[4,4],[W-4,H-4]],rkAreaFeatures()),path=d3.geoPath(proj);
-  const svg=d3.select(host).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label","Map of the ranked schools. Pinned schools are large, each in its own shade of grey; with no pins, the top 8 are large and numbered. Drag a rectangle to rank only the schools inside it.").style("overflow","hidden");
+  const svg=d3.select(host).append("svg").attr("width",W).attr("height",H).attr("role","img").attr("aria-label","Map of the ranked schools. Highlighted schools are large and numbered. Drag a rectangle to rank only the schools inside it.").style("overflow","hidden");
   svg.append("g").selectAll("path").data(states.features).join("path").attr("d",path).attr("fill","var(--sgrey)").attr("stroke","var(--panel)").attr("stroke-width",.8);
   R.pos=new Map(); for(const d of rows){ if(d.LATITUDE==null||d.LONGITUDE==null)continue; const p=proj([d.LONGITUDE,d.LATITUDE]); if(p)R.pos.set(d.UNITID,p); }
   svg.append("g").attr("class","dots").style("pointer-events","none");
@@ -298,9 +298,8 @@ function rkMapUpdate(){
   const hi=rkHi().filter(it=>R.pos.has(it.d.UNITID)),gh=svg.select("g.hi");
   const hg=gh.selectAll("g.h").data(hi,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","h"); g.append("circle"); g.append("text"); return g});
   hg.attr("transform",it=>{const p=R.pos.get(it.d.UNITID);return `translate(${p[0]},${p[1]})`});
-  // pinned schools: a dot in their own shade (no number); with no pins, the top 8 are numbered with their rank
-  hg.select("circle").attr("r",R.pins.length?6:8).style("fill",it=>pinShade(it.d.UNITID)||"var(--dot)").attr("stroke","var(--panel)").attr("stroke-width",1.5);
-  hg.select("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",hi.length>9?8:9).attr("font-weight",700).style("fill","var(--bg)").style("font-family","var(--mono)").text(it=>R.pins.length?"":it.rank);
+  hg.select("circle").attr("r",8).style("fill","var(--dot)").attr("stroke","var(--panel)").attr("stroke-width",1.5);
+  hg.select("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",hi.length>9?8:9).attr("font-weight",700).style("fill","var(--bg)").style("font-family","var(--mono)").text(it=>it.rank);
   $("rkMapLg").innerHTML="";
   $("rkMapNote").textContent=R.geoBox?TEXT.map.boxNote(R.items.length,pop.length):TEXT.map.hint;
   $("rkGeoClear").style.display=R.geoBox?null:"none"; rkMapRings();
@@ -311,7 +310,7 @@ function rkFillField(){ const R=S.rank,s=$("rkField"); s.innerHTML=""; const add
   s.value=R.field?R.field:R.group?"G:"+R.group:""; }
 function rkSyncControls(){ const R=S.rank,fm_=v=>"$"+d3.format(",")(Math.round(v)),mode=R.field||R.group;
   $("rkEarnLab").textContent=mode?TEXT.filters.earningsField:TEXT.filters.earnings; $("rkEarn").value=R.minE; $("rkEarnOut").textContent=R.minE>0?fm_(R.minE):TEXT.filters.none;
-  const mx=RK_CAPMAX.get(R.costVar); $("rkCap").max=mx; $("rkCap").value=R.cap; $("rkCapOut").textContent=R.cap>=mx?TEXT.filters.noLimit:fm_(R.cap); $("rkField").value=R.field?R.field:R.group?"G:"+R.group:""; $("rkType").value=R.type; $("rkRegion").value=R.region; rkFillState(); $("rkRows").value=R.nrows; $("rkRowsOut").textContent=R.nrows; $("rkModeA").setAttribute("aria-pressed",R.mode==="same"); $("rkModeB").setAttribute("aria-pressed",R.mode==="all"); }
+  const mx=RK_CAPMAX.get(R.costVar); $("rkCap").max=mx; $("rkCap").value=R.cap; $("rkCapOut").textContent=R.cap>=mx?TEXT.filters.noLimit:fm_(R.cap); $("rkField").value=R.field?R.field:R.group?"G:"+R.group:""; $("rkType").value=R.type; $("rkRegion").value=R.region; rkFillState(); }
 function rkSetCost(v){ const R=S.rank,i=R.cols.findIndex(c=>c.k===R.costVar);
   if(i>=0&&!R.cols.some(c=>c.k===v)){ const c=R.cols[i]; delete R.ranges[c.k]; R.cols[i]={k:v,imp:c.imp,w:c.w,dir:RKA.get(v).dir,color:c.color}; }
   R.costVar=v; R.cap=RK_CAPMAX.get(v); R.animate=true; rkFillAdd(); }
@@ -328,8 +327,6 @@ function rkSetup(){
   $("rkState").addEventListener("change",e=>{S.rank.state=e.target.value; rkUpdate(false,{track:false})});
   $("rkEarn").addEventListener("input",e=>{S.rank.minE=+e.target.value; $("rkEarnOut").textContent=S.rank.minE>0?"$"+d3.format(",")(S.rank.minE):TEXT.filters.none; later(()=>rkUpdate(false,{track:false}))});
   $("rkCap").addEventListener("input",e=>{const R=S.rank; R.cap=+e.target.value; $("rkCapOut").textContent=R.cap>=RK_CAPMAX.get(R.costVar)?TEXT.filters.noLimit:"$"+d3.format(",")(R.cap); later(()=>rkUpdate(false,{track:false}))});
-  $("rkRows").addEventListener("input",e=>{S.rank.nrows=+e.target.value; $("rkRowsOut").textContent=S.rank.nrows; later(()=>{renderRankBody(); rkLinked(true)})});
-  for(const [id,m] of [["rkModeA","same"],["rkModeB","all"]])$(id).addEventListener("click",()=>{ S.rank.mode=m; S.rank.animate=true; rkSyncControls(); renderRankBody(); rkLinked(true) });
   $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; renderRankBody(); rkLinked(true)});
   $("rkGeoClear").addEventListener("click",()=>{S.rank.geoBox=null; rkMapClearBrush(); rkUpdate(false,{track:false})});
   $("rkAdd").addEventListener("change",e=>rkAdd(e.target.value));

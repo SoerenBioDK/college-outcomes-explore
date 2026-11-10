@@ -55,11 +55,6 @@ const TEXT = {
   /* ---------- main figure ---------- */
   figure: {
     title: "Your ranking, and what it means in real numbers",
-    modeSame: "Same schools",
-    modeSameTip: "Each column re-sorts the schools shown on the left",
-    modeAll: "All schools",
-    modeAllTip: "Each column shows the best of all ranked schools on that variable",
-    rows: "Rows",
     clearPins: "Clear pins",
     pinNone: "Click a school to pin it",
     pinSome: (n, hidden) => `${n} pinned${hidden ? ` (${hidden} filtered out)` : ""}`,
@@ -102,16 +97,15 @@ const TEXT = {
 
     map:
       "Every ranked school is a dot (circle = public, square = private nonprofit, triangle = private for-profit). " +
-      "Pinned schools are large and drawn in the same shade of grey as their line in the figure. If none is pinned, the top 8 are large and show their rank. " +
+      "Pinned schools, or the top 8 if none is pinned, are large and show their rank. " +
       "Drag a box to rank only the schools inside it. Schools outside the 50 states and DC cannot be drawn.",
 
     figure:
       "Left: the schools in rank order. The coloured bar is the score, one colour per variable; the number after the bar is the total score (0 to 100). " +
-      "Right: one column per variable. 'Same schools' sorts the schools shown by each variable, and a grey line follows each school from column to column. " +
-      "'All schools' shows the best of all ranked schools on that variable alone. " +
+      "The top 15 schools are shown. Right: one column per variable, each sorting the same 15 schools by that variable; a grey line follows each school from column to column. " +
       "Above each bar is the real value; bars start at zero on the same scale for all schools; the dashed line is the median of all ranked schools. " +
       "The histogram under each variable name shows all schools: drag on it to keep only schools in that range. " +
-      "Click a school to pin it (up to 10): it stays coloured and gets its own shade of grey, from darkest (first pinned) to mid grey (last pinned). Its line, name, histogram marks and map dot all use that shade; all others turn grey. " +
+      "Click a school to pin it (up to 10): it stays coloured, is marked on the map and on every histogram, and its line between the columns gets its own shade of grey, from darkest (first pinned) to mid grey (last pinned); all others turn grey. " +
       "This is not an official ranking: the weights are yours, and only schools with a value for every chosen variable are ranked."
   }
 };
