@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>College Outcomes Explorer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- Words the user reads are NOT written here: elements marked data-text="group.name" get their text from js/texts.js. -->
+<div class="wrap">
+<header><h1 data-text="pageTitle"></h1></header>
+
+<div class="grid" id="gridRank">
+
+  <!-- left column: filters, importance sliders, region/state + map -->
+  <div class="rkside">
+    <section class="panel crit" aria-label="Filters">
+      <h3 id="tR" data-text="filters.title"></h3><p class="cnt" id="sR"></p>
+      <div class="field"><label for="rkField" data-text="filters.field"></label><select id="rkField"></select></div>
+      <div class="field"><label for="rkEarn"><span id="rkEarnLab"></span> <span class="out" id="rkEarnOut"></span></label><input type="range" id="rkEarn" min="0" max="120000" step="1000" value="0"></div>
+      <div class="field"><label for="rkCap"><span data-text="filters.tuition"></span> <span class="out" id="rkCapOut"></span></label><input type="range" id="rkCap" min="0" max="75000" step="1000" value="75000"></div>
+      <div class="fpair">
+        <div class="field"><label for="rkType" data-text="filters.type"></label><select id="rkType"></select></div>
+        <div class="field"><label for="rkQ" data-text="filters.search"></label><input type="text" id="rkQ" data-text-placeholder="filters.searchPlaceholder" autocomplete="off"></div>
+      </div>
+      <div class="rkctl"><button type="button" id="rkClear" data-text="filters.clear"></button></div>
+    </section>
+
+    <section class="panel crit" aria-label="Importance of each variable">
+      <h3 id="tW" data-text="weights.title"></h3><p class="sub" style="margin:0" data-text="weights.hint"></p>
+      <div id="rkW"></div>
+      <div class="rkctl"><select id="rkAdd" aria-label="Add a variable"></select><button type="button" id="rkReset" data-text="weights.equal"></button></div>
+    </section>
+
+    <section class="panel" aria-label="Region, state and map">
+      <h3 id="tRM" data-text="map.title"></h3>
+      <div class="fpair">
+        <div class="field"><label for="rkRegion" data-text="map.region"></label><select id="rkRegion"></select></div>
+        <div class="field"><label for="rkState" data-text="map.state"></label><select id="rkState"></select></div>
+      </div>
+      <div class="legend" id="rkMapLg"></div><div id="rkMap"></div><p class="sub" id="rkMapNote"></p>
+      <button type="button" id="rkGeoClear" data-text="map.clearBox"></button>
+    </section>
+  </div>
+
+  <!-- right: the merged ranking figure -->
+  <section class="panel rkmain" aria-label="Ranking and real values">
+    <h3 id="tRL" data-text="figure.title"></h3>
+    <div class="rktool">
+      <span class="pills">
+        <button type="button" id="rkModeA" aria-pressed="true" data-text="figure.modeSame" data-text-title="figure.modeSameTip"></button>
+        <button type="button" id="rkModeB" aria-pressed="false" data-text="figure.modeAll" data-text-title="figure.modeAllTip"></button>
+      </span>
+      <label class="rkl" for="rkRows"><span data-text="figure.rows"></span> <b id="rkRowsOut">18</b></label><input type="range" id="rkRows" min="5" max="30" step="1" value="18">
+      <button type="button" id="rkPinClear" data-text="figure.clearPins"></button><span class="sub" id="rkPinNote" style="margin:0"></span>
+    </div>
+    <div class="legend" id="lgRP"></div>
+    <div class="rkwrap" id="rkWrap">
+      <svg id="rkHead" role="img" aria-label="Column headers: direction, histograms and range filters"></svg>
+      <svg id="rkSvg" role="img" aria-label="Ranking and per-variable columns"></svg>
+    </div>
+  </section>
+</div>
+</div>
+<div class="tip" id="tip"></div>
+
+<!-- libraries (from a CDN), then our files; the order matters -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="data/data.js"></script>      <!-- the data (built by build/make_data_js.py) -->
+<script src="js/texts.js"></script>       <!-- all text the user reads, including the "i" pop-ups -->
+<script src="js/variables.js"></script>   <!-- the rankable variables and the field groups -->
+<script src="js/app.js"></script>         <!-- the program -->
+</body>
+</html>

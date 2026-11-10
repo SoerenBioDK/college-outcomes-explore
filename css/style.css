@@ -1,0 +1,91 @@
+/* ============================================================================
+   Styles. Colours are CSS variables at the top (light, and two dark-mode copies).
+   Chart colours (variables, school types) are set in js/app.js and use ColorBrewer only.
+   ============================================================================ */
+:root{
+  --bg:#f6f7f8; --panel:#ffffff; --fg:#1f2428; --muted:#5d666e; --line:#d9dde1; --soft:#eef0f2;
+  --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --median:#252525; --dot:#252525;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --median:#f0f0f0; --dot:#d9d9d9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --median:#f0f0f0; --dot:#d9d9d9; color-scheme:dark}
+
+/* ---------- page ---------- */
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;padding-inline:16px;padding-block:14px 28px}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header h1{font-size:20px;margin:0 0 2px;font-weight:700;letter-spacing:-.01em}
+[hidden]{display:none!important}
+
+/* ---------- form controls ---------- */
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+select,input[type=text],button{font:inherit;font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+select{max-width:260px}
+button{cursor:pointer}
+button:hover,select:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=range]{width:150px;accent-color:var(--accent)}
+.out{font-family:var(--mono);font-size:12px;color:var(--fg)}
+
+/* ---------- panels and headings ---------- */
+.grid{display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 12px 10px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.panel h3{margin:0;font-size:15px;font-weight:600;line-height:1.3;text-wrap:balance}
+.panel .sub{margin:0;font-size:12px;color:var(--muted)}
+.panel .sub:empty{display:none}
+.hrow{display:flex;gap:8px;align-items:flex-start;min-width:0}
+
+/* ---------- round "i" button and its pop-up (text: js/texts.js, TEXT.info) ---------- */
+button.info{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--muted);background:transparent;color:var(--muted);font:italic 700 12px/1 Georgia,serif;cursor:pointer;padding:0;margin-top:1px}
+button.info:hover,button.info[aria-expanded=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+button.info:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#infoPop{position:fixed;z-index:60;max-width:340px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 6px 18px rgba(0,0,0,.2);display:none}
+
+/* ---------- layout: left sidebar (filters, importance, map) + main figure ---------- */
+#gridRank{grid-template-columns:300px minmax(0,1fr);align-items:start}
+.rkside{display:flex;flex-direction:column;gap:10px;min-width:0}
+@media (max-width:1000px){#gridRank{grid-template-columns:minmax(0,1fr)}}
+.crit{gap:7px;padding:10px 12px}
+#gridRank .crit .field{gap:2px}
+#gridRank .crit select{max-width:100%}
+.fpair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rkctl{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:8px}
+.cnt{margin:0;font-size:15px;font-weight:700}
+
+/* ---------- importance sliders ---------- */
+.wr{display:grid;grid-template-columns:12px 116px minmax(40px,1fr) 34px 14px;gap:6px;align-items:center;margin:3px 0}
+.wr i{width:12px;height:12px;border-radius:2px}
+.wr label{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr output{font-family:var(--mono);font-size:12px;text-align:right}
+.wr .x{border:0;background:none;padding:0;color:var(--muted);font-size:12px}
+.wr input{width:100%;margin:0}
+
+/* ---------- map ---------- */
+#rkMapLg{margin-bottom:6px;font-size:11px;gap:4px 10px}
+#rkMap{min-height:60px}
+#rkMapNote{margin:6px 0}
+
+/* ---------- main figure: toolbar, legend and the two SVGs (header, rows) ---------- */
+.rktool{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.rkl{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.rkl b{font-family:var(--mono)}
+.rktool input[type=range]{width:120px}
+.pills{display:inline-flex;gap:6px}
+.pills button{border-radius:999px;padding:4px 12px;font-size:13px}
+.pills button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.rkwrap{position:relative;overflow-x:auto;border-top:1px solid var(--line)}
+#rkHead,#rkSvg{display:block;max-width:none}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+
+/* ---------- svg basics and tooltip ---------- */
+svg{display:block;max-width:100%;color:var(--muted);font-family:var(--sans);font-size:11px}
+svg text{fill:var(--fg)}
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--fg);color:var(--bg);padding:6px 9px;border-radius:4px;font-size:12px;line-height:1.4;max-width:300px;opacity:0;transition:opacity .08s}
+.tip b{font-weight:600}
+@media (prefers-reduced-motion:reduce){.tip{transition:none}}
