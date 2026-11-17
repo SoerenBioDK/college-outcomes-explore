@@ -12,15 +12,15 @@
    ============================================================================ */
 :root{
   --bg:#f6f7f8; --panel:#ffffff; --fg:#1f2428; --muted:#5d666e; --line:#d9dde1; --soft:#eef0f2;
-  --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --median:#252525; --dot:#252525;
+  --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --gry2:#969696; --median:#252525; --dot:#252525; --pin0:#1b9e77; --pin1:#d95f02; --pin2:#7570b3; --pin3:#e7298a; --pin4:#66a61e; --pin5:#e6ab02; --pin6:#a6761d; --pin7:#666666; /* pinned schools: ColorBrewer Dark2 */
   --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --median:#f0f0f0; --dot:#d9d9d9; color-scheme:dark}}
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#969696; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --median:#f0f0f0; --dot:#d9d9d9; color-scheme:dark}
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#969696; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}
 
 /* ---------- page ---------- */
 *{box-sizing:border-box}
@@ -56,7 +56,6 @@ button.info:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* ---------- layout: left sidebar (filters, importance, map) + main figure ---------- */
 #gridRank{grid-template-columns:300px minmax(0,1fr);align-items:start}
-.rkright{display:flex;flex-direction:column;gap:10px;min-width:0}
 .rkside{display:flex;flex-direction:column;gap:10px;min-width:0}
 @media (max-width:1000px){#gridRank{grid-template-columns:minmax(0,1fr)}}
 .crit{gap:7px;padding:10px 12px}
@@ -67,8 +66,7 @@ button.info:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .cnt{margin:0;font-size:15px;font-weight:700}
 
 /* ---------- importance sliders ---------- */
-.wr{display:grid;grid-template-columns:12px 116px minmax(40px,1fr) 34px 14px;gap:6px;align-items:center;margin:3px 0}
-.wr i{width:12px;height:12px;border-radius:2px}
+.wr{display:grid;grid-template-columns:128px minmax(40px,1fr) 34px 14px;gap:6px;align-items:center;margin:3px 0}
 .wr label{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wr output{font-family:var(--mono);font-size:12px;text-align:right}
 .wr .x{border:0;background:none;padding:0;color:var(--muted);font-size:12px}
@@ -108,26 +106,6 @@ svg text{fill:var(--fg)}
 .hf .x{border:0;background:none;padding:0;color:var(--muted);font-size:12px}
 .hf .hs{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 6px;align-items:center;font-size:11px;color:var(--muted);margin-top:4px}
 .hf .hs input{width:100%;margin:0}
-
-/* ---- compare panel ---- */
-.cmpwrap{overflow-x:auto}
-table.cmp{border-collapse:collapse;font-size:12px;min-width:100%}
-table.cmp th,table.cmp td{padding:4px 8px;text-align:left;vertical-align:top;border-top:1px solid var(--line)}
-table.cmp thead th{border-top:0;vertical-align:bottom;min-width:112px;max-width:150px;position:relative;font-weight:600}
-table.cmp thead th:first-child{min-width:150px}
-table.cmp .cn{padding-right:14px;line-height:1.25}
-table.cmp .cl{font-weight:400;color:var(--muted);font-size:11px}
-table.cmp .x{position:absolute;top:2px;right:2px;border:0;background:none;padding:0 2px;color:var(--muted);font-size:11px;cursor:pointer}
-table.cmp tbody th{font-weight:500;white-space:nowrap}
-table.cmp .chip{display:inline-block;width:9px;height:9px;margin-right:6px;border-radius:2px}
-table.cmp .dir{color:var(--muted)}
-table.cmp .v{font-family:var(--mono);font-size:11.5px}
-table.cmp .v.nd{font-family:inherit;color:var(--muted)}
-table.cmp .tr{height:7px;background:var(--soft);margin-top:2px;border-radius:1px}
-table.cmp .tr i{display:block;height:100%;border-radius:1px}
-table.cmp td.best .v{font-weight:700}
-table.cmp td.md{color:var(--muted);border-left:1px dashed var(--line)}
-table.cmp tr.rs td,table.cmp tr.rs th{font-size:13px}
 
 </style>
 </head>
@@ -172,7 +150,6 @@ table.cmp tr.rs td,table.cmp tr.rs th{font-size:13px}
   </div>
 
   <!-- right: the merged ranking figure -->
-  <div class="rkright">
   <section class="panel rkmain" aria-label="Ranking and real values">
     <h3 id="tRL" data-text="figure.title"></h3>
     <div class="rktool">
@@ -184,13 +161,6 @@ table.cmp tr.rs td,table.cmp tr.rs th{font-size:13px}
       <svg id="rkSvg" role="img" aria-label="Ranking and per-variable columns"></svg>
     </div>
   </section>
-
-  <!-- below the figure: the pinned schools side by side -->
-  <section class="panel" aria-label="Compare pinned schools">
-    <h3 id="tCmp" data-text="compare.title"></h3>
-    <div id="rkCmp"></div>
-  </section>
-  </div>
 </div>
 </div>
 <div class="tip" id="tip"></div>
@@ -256,20 +226,6 @@ const TEXT = {
     clearBox: "Clear map selection"
   },
 
-  /* ---------- compare panel (below the figure) ---------- */
-  compare: {
-    title: "Compare your pinned schools",
-    empty: "Pin schools to compare them here: click a row in the ranking or a dot on the map.",
-    rank: "Rank",
-    score: "Score (0–100)",
-    median: "Median of all ranked schools",
-    medianShort: "Median",
-    noData: "no data",
-    remove: name => `Unpin ${name}`,
-    bestTip: "Best of the pinned schools on this variable",
-    hint: "Bars start at zero and use the same scale as the figure above. Bold = best of the pinned schools."
-  },
-
   /* ---------- main figure ---------- */
   figure: {
     title: "Your ranking, and what it means in real numbers",
@@ -283,7 +239,7 @@ const TEXT = {
     headSchool: "School",
     headBars: "Score by variable",
     headScore: "Score",
-    headScoreTip: "Total weighted score, 0 to 100 (sum of the coloured parts)",
+    headScoreTip: "Total weighted score, 0 to 100 (sum of the parts of the bar)",
     // header above each variable column (right half)
     highBest: "↑ high = best",
     lowBest: "↓ low = best",
@@ -320,17 +276,12 @@ const TEXT = {
       "Drag a box to rank only the schools inside it. Schools outside the 50 states and DC cannot be drawn.",
 
     figure:
-      "Left: the top 15 schools in rank order. The coloured bar is the score, one colour per variable; the number after the bar is the total score (0 to 100). " +
+      "Left: the top 15 schools in rank order. The bar is the score: one part per variable, in the same order as the columns (light and dark grey alternate); the number after the bar is the total score (0 to 100). " +
       "Right: one column per variable, ordered by how much it matters to you (most important at the left). Each column sorts the same 15 schools by that variable. " +
       "Above each bar is the real value; bars start at zero on the same scale for all schools; the dashed line is the median of all ranked schools. " +
       "The histogram under each variable name shows all schools: drag on it to keep only schools in that range. " +
-      "Hover a school to see its line across the columns. Click a school to pin it (up to 10): its line stays visible in black, its name appears after the last column, and it is added to the comparison below. Lines of other schools are hidden. " +
-      "This is not an official ranking: the weights are yours, and only schools with a value for every chosen variable are ranked.",
-
-    compare:
-      "The pinned schools side by side: one column per school, one row per variable (same order as in the figure above), with the real value and a bar from zero on the same scale. " +
-      "The last column is the median of all ranked schools. Bold marks the best pinned school on that variable. " +
-      "Hover a school's heading to highlight it in the figure; click the ✕ to unpin it."
+      "Hover a school to see its line across the columns. Click a school to pin it (up to 8): it gets its own colour, its line stays visible, its values become bigger and its name appears after the last column. Lines of other schools are hidden. " +
+      "This is not an official ranking: the weights are yours, and only schools with a value for every chosen variable are ranked."
   }
 };
 
@@ -444,7 +395,7 @@ function placePop(){ if(!infoOpen)return; const r=infoOpen.btn.getBoundingClient
 function closeInfo(){ if(infoOpen){infoOpen.btn.setAttribute("aria-expanded","false"); infoOpen=null;} pop.style.display="none"; }
 function refreshInfo(){ if(infoOpen)placePop(); }
 // [key in TEXT.info, id of the heading the button is placed beside]
-[["filters","tR"],["weights","tW"],["map","tRM"],["figure","tRL"],["compare","tCmp"]].forEach(([k,id])=>{ const h=$(id), w=document.createElement("div"); w.className="hrow"; h.parentNode.insertBefore(w,h); w.appendChild(h);
+[["filters","tR"],["weights","tW"],["map","tRM"],["figure","tRL"]].forEach(([k,id])=>{ const h=$(id), w=document.createElement("div"); w.className="hrow"; h.parentNode.insertBefore(w,h); w.appendChild(h);
   const b=document.createElement("button"); b.type="button"; b.className="info"; b.textContent="i"; b.setAttribute("aria-label","About this panel: how to read it and use it"); b.setAttribute("aria-expanded","false"); w.appendChild(b);
   b.addEventListener("click",e=>{ e.stopPropagation(); const same=infoOpen&&infoOpen.k===k; closeInfo(); if(!same){infoOpen={k,btn:b}; b.setAttribute("aria-expanded","true"); placePop();} }); });
 document.addEventListener("click",e=>{ if(infoOpen&&!pop.contains(e.target))closeInfo(); });
@@ -480,19 +431,19 @@ function findBase(field,group){
 
 const RK_ATTRS=VARIABLES; // defined in js/variables.js
 const RKA=new Map(RK_ATTRS.map(a=>[a[0],{k:a[0],short:a[1],long:a[2],dir:a[3],f:a[4]}]));
-const RK_COL=d3.schemeSet2; // ColorBrewer Set2 (up to 8 columns)
+const RK_COL=["var(--gry2)"]; // variables have no colour of their own any more: ColorBrewer Greys (light and dark segments alternate in the score bar). Colour is used for the pinned schools.
 const RK_INK="#1f2428"; // Set2 colours are light in both themes, so text on them stays dark
 const rkFmt=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(",")(Math.round(v)):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
 const rkCompact=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(".3~s")(v):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
 const rkStats=new Map();
 function rkStat(k){ if(!rkStats.has(k)){const v=rows.map(d=>d[k]).filter(x=>x!=null); rkStats.set(k,{lo:d3.min(v),hi:d3.max(v),vals:v});} return rkStats.get(k); }
 const rkNorm=(c,v)=>{const s=rkStat(c.k),g=(v-s.lo)/((s.hi-s.lo)||1); return c.dir>0?g:1-g};
-const RK_LBL=108, RK_LBLCH=15, RK_RH=28, RK_HH=118, RK_SY0=68, RK_SY1=94, RK_HY0=56, RK_HY1=98, RK_TYPES=["Public","Private nonprofit","Private for-profit"];
+const RK_LBL=108, RK_LBLCH=13, RK_RH=28, RK_HH=118, RK_SY0=68, RK_SY1=94, RK_HY0=56, RK_HY1=98, RK_TYPES=["Public","Private nonprofit","Private for-profit"];
 const RK_SHAPE={"Public":d3.symbolCircle,"Private nonprofit":d3.symbolSquare,"Private for-profit":d3.symbolTriangle},RK_GLYPH={"Public":"●","Private nonprofit":"■","Private for-profit":"▲"};
 const rkSym=d3.symbol().size(75), rkSymPath=t=>rkSym.type(RK_SHAPE[t]||d3.symbolCircle)();
 const RK_STN={AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",PR:"Puerto Rico",GU:"Guam",VI:"U.S. Virgin Islands",AS:"American Samoa",MP:"Northern Mariana Islands",FM:"Micronesia",MH:"Marshall Islands",PW:"Palau"};
 S.rank={cols:DEFAULT_VARIABLES.map((k,i)=>({k,imp:5,w:.2,dir:RKA.get(k).dir,color:RK_COL[i]})),type:"All",q:"",ranges:{},items:[],lastRank:new Map(),chg:null,chgT:0,animate:false,
-  geoBox:null,pos:null,hov:null,mapW:0,group:"",field:"",fieldSet:null,pins:[],acad:false,region:"",state:"",nrows:15,mode:"same",fig:[]};
+  geoBox:null,pos:null,hov:null,mapW:0,group:"",field:"",fieldSet:null,pins:[],slot:new Map(),acad:false,region:"",state:"",nrows:15,mode:"same",fig:[]};
 /* The figure always shows 15 schools and the "same schools" view (rows re-sorted per variable). */
 const rkInBox=d=>{const b=S.rank.geoBox,p=S.rank.pos&&S.rank.pos.get(d.UNITID); return !!p&&p[0]>=b[0][0]&&p[0]<=b[1][0]&&p[1]>=b[0][1]&&p[1]<=b[1][1]};
 function rkRank(cols,skipGeo){
@@ -539,12 +490,12 @@ function renderRankHeader(){
       h.append("g").attr("class","dirb").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","10.5px").style("fill","var(--muted)");
       h.append("g").attr("class","hbars"); h.append("g").attr("class","brush"); h.append("g").attr("class","hmark").style("pointer-events","none"); h.append("text").attr("class","lo").style("font-size","10px").style("fill","var(--muted)"); h.append("text").attr("class","hi").attr("text-anchor","end").style("font-size","10px").style("fill","var(--muted)"); h.append("title"); return h})
    .each(function(c,j){ const h=d3.select(this),x0=L.x0(j),tw=L.tw,s=rkStat(c.k),a=RKA.get(c.k),ln=rkLines(a.short,Math.floor((tw-4)/6.6));
-    h.select("rect.top").attr("x",x0).attr("y",0).attr("width",tw).attr("fill",c.color);
+    h.select("rect.top").attr("x",x0).attr("y",0).attr("width",tw).attr("fill","var(--gry2)");
     h.select("text.nm1").attr("x",x0).attr("y",22).text(ln[0]||""); h.select("text.nm2").attr("x",x0).attr("y",35).text(ln[1]||"");
     h.select("g.dirb").attr("transform",`translate(${x0},49)`).attr("aria-label",`${a.short}: ${c.dir>0?"highest":"lowest"} is best. Press to flip.`).select("text").text(c.dir>0?TEXT.figure.highBest:TEXT.figure.lowBest);
     h.select("g.dirb").on("click",()=>{c.dir=-c.dir;rkUpdate(true,{animate:true})}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;rkUpdate(true,{animate:true})}});
     const bins=rkHistReal(c.k,14),mx=d3.max(bins)||1,bwid=tw/bins.length;
-    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill",c.color).attr("fill-opacity",.85);
+    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill","var(--gry)").attr("fill-opacity",.85);
     h.select("text.lo").attr("x",x0).attr("y",RK_HH-6).text(rkCompact(c.k,s.lo)); h.select("text.hi").attr("x",x0+tw).attr("y",RK_HH-6).text(rkCompact(c.k,s.hi));
     h.select("title").text(TEXT.figure.histTip(a.long));
     const sx=d3.scaleLinear([s.lo,s.hi],[x0,x0+tw]),br=d3.brushX().extent([[x0,RK_HY0-2],[x0+tw,RK_HY1]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=e.selection.map(sx.invert).sort(d3.ascending); rkUpdate(false,{track:false}); });
@@ -570,27 +521,19 @@ function rkAdd(k){ const R=S.rank; if(!k||R.cols.length>=8)return; const used=ne
 let rkWSig="";
 function rkWeightsUI(){ const R=S.rank,host=$("rkW"),sig=R.cols.map(c=>c.k).join("|");
   if(sig!==rkWSig){ rkWSig=sig; host.innerHTML=""; R.cols.forEach(c=>{ const nm=esc(RKA.get(c.k).short),row=document.createElement("div"); row.className="wr"; row.dataset.k=c.k;
-    row.innerHTML=`<i style="background:${c.color}"></i><label for="w_${c.k}" title="${esc(RKA.get(c.k).long)}">${nm}</label><input type="range" id="w_${c.k}" min="0" max="10" step="1" style="accent-color:${c.color}" aria-label="Importance of ${nm}, 0 to 10"><output></output><button type="button" class="x" aria-label="Remove ${nm}">✕</button>`; host.appendChild(row);
+    row.innerHTML=`<label for="w_${c.k}" title="${esc(RKA.get(c.k).long)}">${nm}</label><input type="range" id="w_${c.k}" min="0" max="10" step="1"  aria-label="Importance of ${nm}, 0 to 10"><output></output><button type="button" class="x" aria-label="Remove ${nm}">✕</button>`; host.appendChild(row);
     row.querySelector("input").addEventListener("input",e=>{ c.imp=+e.target.value; rkUpdate(true,{animate:true,light:true}); }); row.querySelector("button").addEventListener("click",()=>rkRemove(c.k)); }); }
   R.cols.forEach(c=>{ const row=host.querySelector(`[data-k="${c.k}"]`); if(!row)return; const inp=row.querySelector("input"); if(+inp.value!==c.imp)inp.value=c.imp; row.querySelector("output").textContent=c.imp; row.querySelector("button").style.display=R.cols.length<2?"none":""; }); }
 function rkUpdate(header,o){ o=o||{}; S.rank.animate=!!o.animate; rkCompute(o.track!==false); rkWeightsUI(); rkFiltersUI(); if(header)renderRankHeader(); renderRankBody(); rkCount(); rkLinked(!!o.light); }
-function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); rkCompare(); }
+function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); }
 function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0)+(R.fieldSet?1:0)+(R.region?1:0)+(R.state?1:0);
   $("sR").textContent=TEXT.filters.count(n); $("sR").title=TEXT.filters.countTip(n,rows.length,R.cols.length); }
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const rkTip=it=>{const d=it.d; return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br>`+S.rank.fig.map(c=>`${esc(RKA.get(c.k).short)}: ${rkFmt(c.k,d[c.k])}`).join("<br>")+`<br><i>${TEXT.figure.tipPin(S.rank.pins.includes(d.UNITID))}</i>`};
-function rkPin(id){ const R=S.rank,i=R.pins.indexOf(id); if(i>=0)R.pins.splice(i,1); else {R.pins.push(id); if(R.pins.length>10)R.pins.shift()} hideTip(); renderRankBody(); rkLinked(true); }
-/* ---- compare panel: pinned schools side by side (HTML table below the figure) ---- */
-function rkCompare(){ const R=S.rank,host=$("rkCmp"),T=TEXT.compare,its=R.items.filter(it=>R.pins.includes(it.d.UNITID)).sort((a,b)=>a.rank-b.rank);
-  if(!its.length){ host.innerHTML=`<p class="sub">${T.empty}</p>`; return; }
-  const cols=R.fig,bar=(c,v)=>v==null?`<div class="v nd">${T.noData}</div>`:`<div class="v">${rkFmt(c.k,v)}</div><div class="tr"><i style="width:${Math.max(1.5,Math.min(1,v/(rkStat(c.k).hi||1))*100)}%;background:${c.color}"></i></div>`;
-  let h=`<div class="cmpwrap"><table class="cmp"><thead><tr><th></th>`+its.map(it=>`<th class="sc" data-id="${it.d.UNITID}"><button type="button" class="x" aria-label="${esc(T.remove(it.d.INSTNM))}">✕</button><div class="cn"><span class="gl">${RK_GLYPH[it.d.Control]||""}</span> ${esc(it.d.INSTNM)}</div><div class="cl">${esc(it.d.CITY)}, ${esc(it.d.STABBR)}</div></th>`).join("")+`<th class="md" title="${esc(T.median)}">${T.medianShort}</th></tr></thead><tbody>`;
-  h+=`<tr class="rs"><th scope="row">${T.rank}</th>`+its.map(it=>`<td><b>${it.rank}</b></td>`).join("")+`<td></td></tr>`;
-  h+=`<tr class="rs"><th scope="row">${T.score}</th>`+its.map(it=>`<td><b>${(it.score*100).toFixed(1)}</b></td>`).join("")+`<td></td></tr>`;
-  cols.forEach(c=>{ const a=RKA.get(c.k),vals=its.map(it=>it.d[c.k]).filter(v=>v!=null),best=vals.length?(c.dir>0?d3.max(vals):d3.min(vals)):null,med=d3.median(R.items,it=>it.d[c.k]);
-    h+=`<tr><th scope="row"><span class="chip" style="background:${c.color}"></span>${esc(a.short)} <span class="dir" title="${esc(c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low)}">${c.dir>0?"↑":"↓"}</span></th>`+its.map(it=>{const v=it.d[c.k]; return `<td class="${v!=null&&v===best&&its.length>1?"best":""}">${bar(c,v)}</td>`}).join("")+`<td class="md">${bar(c,med)}</td></tr>`; });
-  host.innerHTML=h+`</tbody></table></div><p class="sub">${T.hint}</p>`;
-  host.querySelectorAll("th.sc").forEach((th,i)=>{ const id=its[i].d.UNITID; /* the real (numeric) id, not the text from data-id */ th.addEventListener("mouseenter",()=>rkHover(id)); th.addEventListener("mouseleave",()=>rkHover(null)); th.querySelector("button").addEventListener("click",()=>rkPin(id)); }); }
+/* Each pinned school gets one colour (slot 0-7 = --pin0 ... --pin7 in css/style.css); a colour stays with its school until it is unpinned. Maximum 8 pins. */
+const RK_MAXPINS=8;
+const rkPinCol=id=>{const s=S.rank.slot.get(id); return s==null?"var(--dot)":`var(--pin${s})`};
+function rkPin(id){ const R=S.rank,i=R.pins.indexOf(id); if(i>=0){R.pins.splice(i,1); R.slot.delete(id)} else {if(R.pins.length>=RK_MAXPINS)R.slot.delete(R.pins.shift()); R.pins.push(id); const used=new Set(R.slot.values()); let s=0; while(used.has(s))s++; R.slot.set(id,s)} hideTip(); renderRankBody(); rkLinked(true); }
 function rkPinUI(){ const R=S.rank,hid=R.pins.filter(id=>!R.items.some(it=>it.d.UNITID===id)).length; $("rkPinClear").style.display=R.pins.length?null:"none";
   $("rkPinNote").textContent=R.pins.length?TEXT.figure.pinSome(R.pins.length,hid):TEXT.figure.pinNone; }
 function renderRankBody(){
@@ -615,7 +558,7 @@ function renderRankBody(){
   T(cg).attr("transform",o=>`translate(${L.x0(o.j)},${o.y})`);
   cg.select("rect.band").attr("width",L.tw+8); cg.select("text.tag").attr("x",L.tw+10); cg.select("rect.trk").attr("width",L.tw);
   cg.select("text.val").text(o=>rkFmt(R.fig[o.j].k,o.it.d[R.fig[o.j].k])).attr("x",0);
-  cg.select("rect.bar").attr("fill",o=>R.fig[o.j].color).attr("width",o=>{const c=R.fig[o.j],s=rkStat(c.k); return Math.max(1.5,Math.min(1,o.it.d[c.k]/(s.hi||1))*L.tw)});
+  cg.select("rect.bar").attr("fill","var(--gry2)").attr("width",o=>{const c=R.fig[o.j],s=rkStat(c.k); return Math.max(1.5,Math.min(1,o.it.d[c.k]/(s.hi||1))*L.tw)});
   cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.fig[o.j],it=o.it,d=it.d; let h=rkTip(it); h=h.replace("<br><i>",`<br>${TEXT.figure.tipCell(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low)}<br><i>`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
   const mg=svg.select("g.med"); mg.selectAll("*").remove();
   R.fig.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+Math.min(1,med/(s.hi||1))*L.tw;
@@ -631,7 +574,7 @@ function renderRankBody(){
   if(live&&!reduced&&fade>0)ch.transition().duration(Math.max(0,3400-age)).ease(d3.easeLinear).attr("fill-opacity",0);
   rg.select("text.nmx").attr("x",L.nameX).attr("y",18).text(it=>{const m=Math.floor(L.nameW/6.6);return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
   rg.each(function(it){ const sg=d3.select(this).select("g.stack"); let x=L.barX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.bw,c:R.fig[i]};x+=o.w;return o});
-    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",7).attr("height",RH-14).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>o.c.color).attr("stroke","var(--panel)").attr("stroke-width",.6);
+    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",7).attr("height",RH-14).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>R.fig.indexOf(o.c)%2?"var(--gry2)":"var(--gry)").attr("stroke","var(--panel)").attr("stroke-width",.6);
     d3.select(this).select("text.sc").attr("x",L.scX).attr("y",18).style("fill","var(--muted)").text(Math.round(it.score*100)); });
   rg.on("mousemove",function(e,it){ rkHover(it.d.UNITID); const [px]=d3.pointer(e,svg.node()); let x=L.barX,idx=-1; for(let i=0;i<it.parts.length;i++){const w=it.parts[i]*L.bw; if(px>=x&&px<x+w){idx=i;break} x+=w}
       let html=rkTip(it); if(idx>=0){const c=R.fig[idx],d=it.d; html=html.replace("<br><i>",`<br>${TEXT.figure.tipPart(esc(RKA.get(c.k).short),(rkNorm(c,d[c.k])*100).toFixed(0),Math.round(c.w*100),(it.parts[idx]*100).toFixed(1))}<br><i>`)} showTip(e,html);})
@@ -641,17 +584,25 @@ function renderRankBody(){
 }
 function rkFigStyle(){
   const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,hp=h!=null&&pins.has(h),on=id=>pins.has(id)||id===h;
-  svg.selectAll("path.ln").attr("stroke",o=>on(o.id)?"var(--dot)":"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();   /* lines of schools that are neither pinned nor hovered are hidden */
+  svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?"var(--dot)":"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();
   svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.6:1);
-  svg.selectAll("g.cell rect.bar").style("fill",o=>any&&!on(o.id)?"var(--gry)":null);
-  svg.selectAll("g.row g.stack rect").style("fill",function(){const it=this.parentNode.parentNode.__data__; return any&&!on(it.d.UNITID)?"var(--gry)":null});
-  svg.selectAll("rect.band").attr("fill",o=>on(o.id)?"var(--soft)":"transparent").attr("stroke",o=>pins.has(o.id)?"var(--median)":"none");
-  svg.selectAll("rect.hit").attr("fill",it=>on(it.d.UNITID)?"var(--soft)":"transparent").attr("stroke",it=>pins.has(it.d.UNITID)?"var(--median)":"none").style("cursor","pointer");
-  svg.selectAll("text.nmx").style("font-weight",it=>pins.has(it.d.UNITID)?700:400);
+  svg.selectAll("g.cell rect.bar").style("fill",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?"var(--dot)":any?"var(--gry)":null);
+  /* pinned schools: bigger, bold values and thicker bars */
+  svg.selectAll("g.cell text.val").style("font-size",o=>pins.has(o.id)?"12.5px":"10.5px").style("font-weight",o=>pins.has(o.id)?700:400).attr("y",o=>pins.has(o.id)?12.5:11);
+  svg.selectAll("g.cell rect.trk, g.cell rect.bar").attr("y",function(){return pins.has(this.parentNode.__data__.id)?15:14}).attr("height",function(){return pins.has(this.parentNode.__data__.id)?10:9});
+  svg.selectAll("g.row g.stack rect").style("fill",function(){const it=this.parentNode.parentNode.__data__,id=it.d.UNITID; return pins.has(id)?rkPinCol(id):on(id)?"var(--dot)":any?"var(--gry)":null}).style("fill-opacity",function(o){const id=this.parentNode.parentNode.__data__.d.UNITID; return on(id)&&R.fig.indexOf(o.c)%2?.6:null});
+  svg.selectAll("rect.band").attr("fill",o=>on(o.id)?"var(--soft)":"transparent").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):"none").attr("stroke-width",o=>pins.has(o.id)?1.8:1);
+  svg.selectAll("rect.hit").attr("fill",it=>on(it.d.UNITID)?"var(--soft)":"transparent").attr("stroke",it=>pins.has(it.d.UNITID)?rkPinCol(it.d.UNITID):"none").attr("stroke-width",it=>pins.has(it.d.UNITID)?1.8:1).style("cursor","pointer");
+  /* pinned schools: bigger and bold rank, name, glyph, score bar and score in the left part of the row */
+  const LN=rkLayout(),isP=it=>pins.has(it.d.UNITID);
+  svg.selectAll("g.row text.nmx").style("font-weight",it=>isP(it)?700:400).style("font-size",it=>isP(it)?"14px":"12.5px").text(it=>{const m=Math.floor(LN.nameW/(isP(it)?7.6:6.6)); return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
+  svg.selectAll("g.row text.rk, g.row text.sc").style("font-size",it=>isP(it)?"14px":"12px").style("font-weight",it=>isP(it)?700:400).style("fill",it=>isP(it)?"var(--fg)":"var(--muted)");
+  svg.selectAll("g.row path.tdot").attr("d",it=>d3.symbol().size(isP(it)?115:75).type(RK_SHAPE[it.d.Control]||d3.symbolCircle)());
+  svg.selectAll("g.row g.stack rect").attr("y",function(){return isP(this.parentNode.parentNode.__data__)?4:7}).attr("height",function(){return isP(this.parentNode.parentNode.__data__)?RK_RH-8:RK_RH-14});
   svg.selectAll("g.row").style("opacity",it=>any&&!on(it.d.UNITID)?.65:1);
   const LT=rkLayout(); /* school name after the last column, on up to two lines, for pinned and hovered schools */
   svg.selectAll("text.tag").each(function(){ const o=this.parentNode.__data__,t=d3.select(this); t.selectAll("tspan").remove(); if(o.j!==R.fig.length-1||!on(o.id))return;
-    const ls=rkLines(o.it.d.INSTNM,RK_LBLCH).filter(Boolean); t.attr("y",ls.length>1?14:19).style("font-weight",pins.has(o.id)?700:400); ls.forEach((s,i)=>t.append("tspan").attr("x",LT.tw+10).attr("dy",i?"12px":0).text(s)); });
+    const ls=rkLines(o.it.d.INSTNM,RK_LBLCH).filter(Boolean); t.attr("y",ls.length>1?14:19).style("font-weight",pins.has(o.id)?700:400); ls.forEach((s,i)=>{ const ts=t.append("tspan").attr("x",LT.tw+10).attr("dy",i?"12px":0); if(!i&&pins.has(o.id))ts.append("tspan").style("fill",rkPinCol(o.id)).text("■ "); ts.append("tspan").text(s); }); });
   rkHistMark();
 }
 function rkHistMark(){
@@ -660,7 +611,7 @@ function rkHistMark(){
     const mk=new Set(pinIts.map(it=>bi(it.d[c.k]))),hb=hovIt?bi(hovIt.d[c.k]):-1,any=mk.size>0||hb>=0;
     gh.selectAll("g.hbars rect").attr("fill-opacity",(d,i)=>any?(mk.has(i)||i===hb?1:.3):.85).attr("stroke",(d,i)=>mk.has(i)||i===hb?"var(--fg)":"none").attr("stroke-width",1.2);
     const mg=gh.select("g.hmark"); mg.selectAll("*").remove();
-    const ticks=pinIts.map(it=>({x:x0+(it.d[c.k]-s.lo)/span*L.tw,col:"var(--dot)"})).concat(hovIt?[{x:x0+(hovIt.d[c.k]-s.lo)/span*L.tw,col:"var(--median)"}]:[]);
+    const ticks=pinIts.map(it=>({x:x0+(it.d[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hovIt?[{x:x0+(hovIt.d[c.k]-s.lo)/span*L.tw,col:"var(--median)"}]:[]);
     for(const k of ticks){ mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke","var(--panel)").attr("stroke-width",4.5); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",RK_HY0+1).attr("r",3.6).attr("fill",k.col).attr("stroke","var(--panel)").attr("stroke-width",1.2); }
   });
 }
@@ -698,7 +649,7 @@ function rkMapUpdate(){
   const hi=rkHi().filter(it=>R.pos.has(it.d.UNITID)),gh=svg.select("g.hi");
   const hg=gh.selectAll("g.h").data(hi,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","h"); g.append("circle"); g.append("text"); return g});
   hg.attr("transform",it=>{const p=R.pos.get(it.d.UNITID);return `translate(${p[0]},${p[1]})`});
-  hg.select("circle").attr("r",8).style("fill","var(--dot)").attr("stroke","var(--panel)").attr("stroke-width",1.5);
+  hg.select("circle").attr("r",8).style("fill",it=>R.pins.includes(it.d.UNITID)?rkPinCol(it.d.UNITID):"var(--dot)").attr("stroke","var(--panel)").attr("stroke-width",1.5);
   hg.select("text").attr("text-anchor","middle").attr("dy","0.35em").attr("font-size",hi.length>9?8:9).attr("font-weight",700).style("fill","var(--bg)").style("font-family","var(--mono)").text(it=>it.rank);
   $("rkMapLg").innerHTML="";
   $("rkMapNote").textContent=R.geoBox?TEXT.map.boxNote(R.items.length,pop.length):TEXT.map.hint;
@@ -737,7 +688,7 @@ function rkSetup(){
   rkFillRegion(); rkFillState();
   $("rkRegion").addEventListener("change",e=>{const R=S.rank; R.region=e.target.value; if(R.state&&R.region&&RK_STREG.get(R.state)!==R.region)R.state=""; rkFillState(); rkUpdate(false,{track:false})});
   $("rkState").addEventListener("change",e=>{S.rank.state=e.target.value; rkUpdate(false,{track:false})});
-  $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; renderRankBody(); rkLinked(true)});
+  $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; S.rank.slot=new Map(); renderRankBody(); rkLinked(true)});
   $("rkGeoClear").addEventListener("click",()=>{S.rank.geoBox=null; rkMapClearBrush(); rkUpdate(false,{track:false})});
   $("rkAdd").addEventListener("change",e=>rkAdd(e.target.value));
   $("rkFAdd").addEventListener("change",e=>{ const k=e.target.value; if(!k)return; const s=rkStat(k); S.rank.ranges[k]=[s.lo,s.hi]; rkUpdate(true,{track:false}); });
