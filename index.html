@@ -97,7 +97,7 @@ svg text{fill:var(--fg)}
 .tip b{font-weight:600}
 @media (prefers-reduced-motion:reduce){.tip{transition:none}}
 
-/* ---- hard filters (left panel) ---- */
+/* ---- filters (left panel) ---- */
 .field .lab{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
 .hf{margin:6px 0 8px;padding:6px 8px;border:1px solid var(--line,#d9d9d9);border-radius:6px}
 .hf .hh{display:flex;align-items:center;gap:8px;font-size:12.5px}
@@ -106,8 +106,6 @@ svg text{fill:var(--fg)}
 .hf .x{border:0;background:none;padding:0;color:var(--muted);font-size:12px}
 .hf .hs{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 6px;align-items:center;font-size:11px;color:var(--muted);margin-top:4px}
 .hf .hs input{width:100%;margin:0}
-.tip .tbar{display:flex;height:32px;margin:6px 0 4px;background:color-mix(in srgb,currentColor 15%,transparent);border-radius:2px;overflow:hidden}
-.tip .tbar div{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;font-size:10px;line-height:1.15;text-align:center}
 
 </style>
 </head>
@@ -123,13 +121,13 @@ svg text{fill:var(--fg)}
     <section class="panel crit" aria-label="Filters">
       <h3 id="tR" data-text="filters.title"></h3><p class="cnt" id="sR"></p>
       <div class="field"><label for="rkField" data-text="filters.field"></label><select id="rkField"></select></div>
-      <div class="field"><span class="lab" data-text="filters.hardTitle"></span>
-        <div id="rkFilters"></div>
-        <select id="rkFAdd" aria-label="Add a hard filter"></select>
-      </div>
       <div class="fpair">
         <div class="field"><label for="rkType" data-text="filters.type"></label><select id="rkType"></select></div>
         <div class="field"><label for="rkQ" data-text="filters.search"></label><input type="text" id="rkQ" data-text-placeholder="filters.searchPlaceholder" autocomplete="off"></div>
+      </div>
+      <div class="field"><span class="lab" data-text="filters.hardTitle"></span>
+        <div id="rkFilters"></div>
+        <select id="rkFAdd" aria-label="Add a filter"></select>
       </div>
       <div class="rkctl"><button type="button" id="rkClear" data-text="filters.clear"></button></div>
     </section>
@@ -195,8 +193,8 @@ const TEXT = {
     field: "Field of study",
     fieldAny: "Any field",
     fieldOther: "Other",
-    hardTitle: "Hard filters",                                           // heading above the list of filters
-    addFilter: "+ Add a hard filter",
+    hardTitle: "Filters",                                           // heading above the list of filters
+    addFilter: "+ Add a filter",
     filterFrom: "from",
     filterTo: "to",
     removeFilter: name => `Remove the filter on ${name}`,
@@ -246,6 +244,8 @@ const TEXT = {
     histTip: long => `${long}. The histogram shows all schools; drag on it to keep only schools in that range.`,
     medianTip: (n, value) => `Median of the ${n} ranked schools: ${value}`,
     // hover text on a school
+    tipHead: "Value · points / most possible:",
+    tipVar: (name, value, points, max) => `${name}: ${value} · <b>${points}</b> / ${max}`,
     tipRank: (rank, score) => `Rank ${rank} · score ${score} of 100`,
     tipPin: pinned => `Click to ${pinned ? "unpin" : "pin"} this school`,
     tipCell: (name, value, best) => `<b>${name}</b>: ${value} (${best} is best)`,
@@ -259,7 +259,7 @@ const TEXT = {
     filters:
       "Decide which schools get ranked.\n" +
       "Pick a field of study and you only see schools that offer it. A bold heading means the whole group of fields.\n" +
-      "Add a hard filter on any variable, like earnings, and set the lowest and highest value you would accept. Schools outside that range are dropped. Dragging across a histogram does the same thing.\n" +
+      "Add a filter on any variable, like earnings, and set the lowest and highest value you would accept. Schools outside that range are dropped. Dragging across a histogram does the same thing.\n" +
       "Military academies are always left out.",
 
     weights:
@@ -523,15 +523,9 @@ function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); }
 function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0)+(R.fieldSet?1:0)+(R.region?1:0)+(R.state?1:0);
   $("sR").textContent=TEXT.filters.count(n); $("sR").title=TEXT.filters.countTip(n,rows.length,R.cols.length); }
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* Hover box of a school: name, place, rank and score, and ONE stacked bar showing where the score comes from.
-   Bar = 100 points wide; each segment = points from one variable, in the same order as the columns; the empty rest is the points the school did not get. */
-const RK_TIPW=288;
-const rkTipLabel=(name,w)=>{ const n=Math.floor((w-6)/5.2),f=name.split(" ")[0]; if(n<3)return ""; if(name.length<=n)return name; if(f.length<=n)return f; return n>=4?f.slice(0,n-1)+"…":""; };
-const rkTip=it=>{const d=it.d,R=S.rank;
-  const segs=R.fig.map((c,i)=>{ const pts=it.parts[i]*100,w=pts*RK_TIPW/100,nm=RKA.get(c.k).short;
-    return `<div style="width:${w}px;background:color-mix(in srgb,currentColor ${i%2?55:85}%,transparent)" title="${esc(nm)}"><span style="color:var(--fg)">${esc(rkTipLabel(nm,w))}${w>=18?`<br><b>${Math.round(pts)}</b>`:""}</span></div>`}).join("");
-  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(0))}`+
-    `<div class="tbar" style="width:${RK_TIPW}px">${segs}</div><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
+/* Hover box of a school: name, place, rank and score, then one line per variable: value · points / most possible points. */
+const rkTip=it=>{const d=it.d,R=S.rank; /* it.parts[i] = this school's share of the score from variable R.fig[i]; points = part x 100, maximum = weight share x 100 */
+  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map((c,i)=>TEXT.figure.tipVar(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),(it.parts[i]*100).toFixed(1),(c.w*100).toFixed(1))).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
 /* Each pinned school gets one colour (slot 0-7 = --pin0 ... --pin7 in css/style.css); a colour stays with its school until it is unpinned. Maximum 8 pins. */
 const RK_MAXPINS=8;
 const rkPinCol=id=>{const s=S.rank.slot.get(id); return s==null?"var(--dot)":`var(--pin${s})`};
@@ -563,7 +557,7 @@ function renderRankBody(){
   cg.select("rect.band").attr("width",L.tw+8); cg.select("text.tag").attr("x",L.tw+10); cg.select("rect.trk").attr("width",L.tw);
   cg.select("text.val").text(o=>rkFmt(R.fig[o.j].k,o.it.d[R.fig[o.j].k])).attr("x",0);
   cg.select("rect.bar").attr("fill","var(--gry2)").attr("width",o=>{const c=R.fig[o.j],s=rkStat(c.k); return Math.max(1.5,Math.min(1,o.it.d[c.k]/(s.hi||1))*L.tw)});
-  cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.fig[o.j],it=o.it,d=it.d; let h=rkTip(it); h=h.replace('<div class="tbar"',`<br>${TEXT.figure.tipCell(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low)}<div class="tbar"`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
+  cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.fig[o.j],it=o.it,d=it.d; let h=rkTip(it); h=h.replace('<br><span class="tiph">',`<br>${TEXT.figure.tipCell(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low)}<br><span class="tiph">`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
   const mg=svg.select("g.med"); mg.selectAll("*").remove();
   R.fig.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+Math.min(1,med/(s.hi||1))*L.tw;
     mg.append("line").attr("x1",x).attr("x2",x).attr("y1",0).attr("y2",H-4).attr("stroke","var(--muted)").attr("stroke-dasharray","3 3").attr("stroke-opacity",.6).style("pointer-events","none").append("title").text(TEXT.figure.medianTip(R.items.length,rkFmt(c.k,med))); });
@@ -655,7 +649,7 @@ function rkFillField(){ const R=S.rank,s=$("rkField"); s.innerHTML=""; const add
   const done=new Set(); GROUPS.forEach(([g])=>{ const fs=FIELDOPTS.filter(o=>o.grp===g); if(!fs.length)return; done.add(g); add("G:"+g,g,true); fs.sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,"\u2003"+o.label)); });
   const rest=FIELDOPTS.filter(o=>!done.has(o.grp)); if(rest.length){ add("",TEXT.filters.fieldOther,true,true); rest.sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,"\u2003"+o.label)); }
   s.value=R.field?R.field:R.group?"G:"+R.group:""; }
-/* ---- hard filters: any variable, with a lowest and a highest allowed value (stored in S.rank.ranges, the same place the histogram brush writes to) ---- */
+/* ---- filters: any variable, with a lowest and a highest allowed value (stored in S.rank.ranges, the same place the histogram brush writes to) ---- */
 let rkFSig="";
 function rkFiltersUI(){ const R=S.rank,host=$("rkFilters"),keys=Object.keys(R.ranges),sig=keys.join("|");
   if(sig!==rkFSig){ rkFSig=sig; host.innerHTML="";
