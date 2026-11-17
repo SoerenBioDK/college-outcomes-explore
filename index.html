@@ -136,6 +136,7 @@ svg text{fill:var(--fg)}
       <h3 id="tW" data-text="weights.title"></h3><p class="sub" style="margin:0" data-text="weights.hint"></p>
       <div id="rkW"></div>
       <div class="rkctl"><select id="rkAdd" aria-label="Add a variable"></select><button type="button" id="rkReset" data-text="weights.equal"></button></div>
+      <div class="field"><label for="rkHome" data-text="weights.homeLabel"></label><select id="rkHome"></select><p class="sub" id="rkHomeNote" style="margin:4px 0 0"></p></div>
     </section>
 
     <section class="panel" aria-label="Region, state and map">
@@ -189,7 +190,7 @@ const TEXT = {
   filters: {
     title: "Filter schools",
     count: n => `${n.toLocaleString("en-US")} schools`,                 // bold number under the title
-    countTip: (n, all, vars) => `${n.toLocaleString("en-US")} of ${all.toLocaleString("en-US")} schools have a value for all ${vars} chosen variables and pass your filters. Ranks are counted among them.`,
+    countTip: (n, all, vars) => `${n.toLocaleString("en-US")} of ${all.toLocaleString("en-US")} schools pass your filters and have values for the ${vars} chosen variables, with at most one missing. A missing value is replaced by the median of the school type and drawn dashed. Ranks are counted among these schools.`,
     field: "Field of study",
     fieldAny: "Any field",
     fieldOther: "Other",
@@ -210,7 +211,11 @@ const TEXT = {
     title: "What matters to you",
     hint: "0 = ignore · 10 = very important",
     add: "+ Add a variable",
-    equal: "Equal"
+    equal: "Equal",
+    homeLabel: "Your home state (for tuition)",
+    homeNone: "Not chosen",
+    homeNoteNone: "* No home state chosen, so tuition is the out-of-state price.",
+    homeNote: name => `Tuition is the in-state price for public schools in ${name} and the out-of-state price for all other schools.`
   },
 
   /* ---------- left panel 3: region, state and map ---------- */
@@ -244,6 +249,12 @@ const TEXT = {
     histTip: long => `${long}. The histogram shows all schools; drag on it to keep only schools in that range.`,
     medianTip: (n, value) => `Median of the ${n} ranked schools: ${value}`,
     // hover text on a school
+    noData: "no data",
+    legendEst: "no data: median of the school type used",
+    tipEst: " (estimated)",
+    tipVarNone: name => `${name}: no data`,
+    tipCellNone: name => `<b>${name}</b>: no data`,
+    tipCellEst: (name, value, type) => `<b>${name}</b>: no data. The median of ${type.toLowerCase()} schools (${value}) is used.`,
     tipHead: "Per variable (100% = best school):",
     tipVar: (name, pct) => `${name}: <b>${pct}%</b>`,
     tipRank: (rank, score) => `Rank ${rank} · score ${score} of 100`,
@@ -277,36 +288,28 @@ const TEXT = {
    Each row:  [column name in the data, short name (column header and weight slider),
                long description (hover text), direction, format]
      direction: 1 = higher is better, -1 = lower is better
-     format:    "$" money, "%" percent, "n" plain number
-   To add a variable: add a row here AND make sure the column exists in data/colleges_slim.csv
+     format:    "$" money, "$log" money stored as log10 (shown as dollars), "%" percent, "n" plain number
+   To add a variable: add a row here AND make sure the column exists in data/colleges_slim.csv (the column "Tuition" is the exception: js/app.js builds it from Tuition_in_state and Tuition_out_of_state and the chosen home state)
    (then rebuild data/data.js, see build/README.md). The column is listed in the "+ Add a variable"
    menu automatically.
    ============================================================================ */
 const VARIABLES=[
  ["Earnings_10yr","Earnings 10 yrs","Median earnings, 10 yrs after entry",1,"$"],
- ["Earnings_6yr","Earnings 6 yrs","Median earnings, 6 yrs after entry",1,"$"],
- ["Above_threshold_10yr","Beats HS grad","% earning more than a high-school graduate, 10 yrs",1,"%"],
  ["Completion_rate","Completion","Completion rate",1,"%"],
  ["Retention_rate","Retention","First-year retention rate",1,"%"],
- ["Grad_debt","Grad debt","Median debt of graduates (federal loans, which international students cannot take)",-1,"$"],
- ["Tuition_out_of_state","Tuition out-of-state","Tuition and fees for out-of-state students (closest to what an international student pays)",-1,"$"],
+ ["Grad_debt","Grad debt","Median federal-loan debt of graduates",-1,"$"],
+ ["Tuition","Tuition","Tuition and required fees per year. For public schools in your home state this is the in-state price, for all other schools the out-of-state price (choose your home state under \"What matters to you\")",-1,"$"],
  ["Cost_of_attendance","Cost of attendance","Cost of attendance per year (tuition, housing, books)",-1,"$"],
- ["Net_price","Net price","Average net price per year (only students with U.S. federal aid)",-1,"$"],
- ["Tuition_in_state","Tuition in-state","Tuition and fees (in-district/in-state)",-1,"$"],
+ ["Net_price","Net price (after grants)","Average yearly price after grants and scholarships, for students with U.S. federal aid. Public schools: in-state students only",-1,"$"],
  ["Default_2yr","Default rate","Loan default rate, 2 yrs after repayment starts (about half of schools)",-1,"%"],
  ["Pell_share","Pell share","% of students with Pell grants (access)",1,"%"],
- ["Lowincome_share","Low-income share","% of first-time students from families under $48k (access)",1,"%"],
- ["Repay5_pell","Repay 5y, Pell","Repayment rate 5 yrs, Pell students",1,"%"],
- ["Repay5_inc_low","Repay 5y, low inc.","Repayment rate 5 yrs, family income $30k or less",1,"%"],
  ["Earnings_10yr_inc_low","Earnings, low inc.","Median earnings 10 yrs, family income $30k or less",1,"$"],
- ["Net_price_highest_income","Net price, high inc.","Net price, family income over $110k",-1,"$"],
- ["Faculty_salary_month","Faculty salary","Average faculty salary per month",1,"$"],
- ["Instruction_spend_log10","Instruction spend","Instruction spending per student (log10 $)",1,"n"],
- ["Admission_rate","Admission rate","Admission rate (lower = more selective)",-1,"%"],
- ["SAT_avg","SAT average","Average SAT score (selective schools only)",1,"n"]];
+ ["Faculty_salary_month","Faculty salary","Average monthly pay per full-time instructor",1,"$"],
+ ["Instruction_spend_log10","Spending per student","Instruction spending per student per year, in dollars (the score and the histogram use a log scale, because a few schools spend far more than the rest)",1,"$log"],
+ ["Admission_rate","Admission rate","Admission rate (lower = more selective)",-1,"%"]];
 
 /* The variables shown when the page opens (column names from the list above). All start with importance 5. */
-const DEFAULT_VARIABLES=["Earnings_10yr","Completion_rate","Retention_rate","Tuition_out_of_state","Grad_debt"];
+const DEFAULT_VARIABLES=["Earnings_10yr","Completion_rate","Tuition","Grad_debt"];
 
 /* ============================================================================
    FIELD_GROUPS: broad fields of study used in the "Field of study" menu.
@@ -418,10 +421,19 @@ const RK_ATTRS=VARIABLES; // defined in js/variables.js
 const RKA=new Map(RK_ATTRS.map(a=>[a[0],{k:a[0],short:a[1],long:a[2],dir:a[3],f:a[4]}]));
 const RK_COL=["var(--gry2)"]; // variables have no colour of their own any more: ColorBrewer Greys (light and dark segments alternate in the score bar). Colour is used for the pinned schools.
 const RK_INK="#1f2428"; // Set2 colours are light in both themes, so text on them stays dark
-const rkFmt=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(",")(Math.round(v)):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
-const rkCompact=(k,v)=>{const f=RKA.get(k).f; return f==="$"?"$"+d3.format(".3~s")(v):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
+const rkFmt=(k,v)=>{let f=RKA.get(k).f; if(f==="$log"){f="$"; v=Math.pow(10,v)} return f==="$"?"$"+d3.format(",")(Math.round(v)):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
+const rkCompact=(k,v)=>{let f=RKA.get(k).f; if(f==="$log"){f="$"; v=Math.pow(10,v)} return f==="$"?"$"+d3.format(".3~s")(v):f==="%"?Math.round(v)+"%":d3.format(".2f")(v)};
 const rkStats=new Map();
 function rkStat(k){ if(!rkStats.has(k)){const v=rows.map(d=>d[k]).filter(x=>x!=null); rkStats.set(k,{lo:d3.min(v),hi:d3.max(v),vals:v});} return rkStats.get(k); }
+/* Tuition depends on the home state: a virtual column "Tuition" = in-state price for public schools in the chosen home state, out-of-state price otherwise (private schools charge the same to everyone). Without a home state the out-of-state price is used and the name gets a * */
+/* Missing values (idea from LineUp, section 4.7): a school that lacks ONE chosen variable is still ranked; the missing value is replaced by the median of the schools of the same type (Public / Private nonprofit / Private for-profit) and the cell is drawn dashed. A school missing more than RK_MAXMISS chosen variables is not ranked. A variable with importance 0 is ignored and never excludes a school. */
+const RK_MAXMISS=1, rkMeds=new Map();
+function rkMedByType(k,ctrl){ if(!rkMeds.has(k)){ const m={}; for(const t of ["Public","Private nonprofit","Private for-profit"]) m[t]=d3.median(rows.filter(d=>!d.Special&&d.Control===t),d=>d[k]); rkMeds.set(k,m)} return rkMeds.get(k)[ctrl]; }
+const RKH={state:""};
+function rkSetTuition(){ for(const d of rows) d.Tuition=(RKH.state&&d.STABBR===RKH.state&&d.Tuition_in_state!=null)?d.Tuition_in_state:d.Tuition_out_of_state; rkStats.delete("Tuition"); rkMeds.delete("Tuition"); RKA.get("Tuition").short=RKH.state?"Tuition":"Tuition*"; }
+rkSetTuition();
+/* position of a value along its column (0..1): bars start at zero; a variable stored as log10 ($log) runs from the lowest to the highest school on the log scale, the same scale as its histogram */
+const rkFrac=(k,v)=>{const s=rkStat(k); return Math.max(0,Math.min(1,RKA.get(k).f==='$log'?(v-s.lo)/((s.hi-s.lo)||1):v/(s.hi||1)))};
 const rkNorm=(c,v)=>{const s=rkStat(c.k),g=(v-s.lo)/((s.hi-s.lo)||1); return c.dir>0?g:1-g};
 const RK_LBL=10, RK_LBLCH=13, RK_RH=28, RK_HH=118, RK_SY0=68, RK_SY1=94, RK_HY0=56, RK_HY1=98, RK_TYPES=["Public","Private nonprofit","Private for-profit"];
 const RK_SHAPE={"Public":d3.symbolCircle,"Private nonprofit":d3.symbolSquare,"Private for-profit":d3.symbolTriangle},RK_GLYPH={"Public":"●","Private nonprofit":"■","Private for-profit":"▲"};
@@ -432,17 +444,20 @@ S.rank={cols:DEFAULT_VARIABLES.map((k,i)=>({k,imp:5,w:.2,dir:RKA.get(k).dir,colo
 /* The figure always shows 15 schools and the "same schools" view (rows re-sorted per variable). */
 const rkInBox=d=>{const b=S.rank.geoBox,p=S.rank.pos&&S.rank.pos.get(d.UNITID); return !!p&&p[0]>=b[0][0]&&p[0]<=b[1][0]&&p[1]>=b[0][1]&&p[1]<=b[1][1]};
 function rkRank(cols,skipGeo){
-  const R=S.rank,q=R.q.trim().toLowerCase(),rk=Object.entries(R.ranges),items=[];
+  const R=S.rank,q=R.q.trim().toLowerCase(),rk=Object.entries(R.ranges),items=[],nw=cols.filter(c=>c.w>0).length;
   for(const d of rows){
     if(R.type!=="All"&&d.Control!==R.type)continue; if(q&&!d.INSTNM.toLowerCase().includes(q))continue;
     if(!R.acad&&d.Special)continue;
     if(R.region&&d.Region!==R.region)continue; if(R.state&&d.STABBR!==R.state)continue;
     if(R.fieldSet&&!R.fieldSet.has(d.UNITID))continue;
     if(!skipGeo&&R.geoBox&&!rkInBox(d))continue;
-    let ok=true; for(const c of cols){if(d[c.k]==null){ok=false;break}}
+    let miss=0; for(const c of cols)if(c.w>0&&d[c.k]==null)miss++;
+    let ok=miss<=RK_MAXMISS&&miss<nw; /* at least one real value must remain */
     if(ok)for(const [k,r] of rk){const v=d[k]; if(v==null||v<r[0]||v>r[1]){ok=false;break}}
     if(!ok)continue;
-    const parts=cols.map(c=>c.w*rkNorm(c,d[c.k])); items.push({d,parts,score:d3.sum(parts)});
+    const v={},est=new Set(); for(const c of cols){ let x=d[c.k]; if(x==null&&c.w>0){ x=rkMedByType(c.k,d.Control); if(x==null){ok=false;break} est.add(c.k) } v[c.k]=x; }
+    if(!ok)continue;
+    const parts=cols.map(c=>c.w>0?c.w*rkNorm(c,v[c.k]):0); items.push({d,parts,score:d3.sum(parts),v,est});
   }
   items.sort((a,b)=>b.score-a.score||a.d.INSTNM.localeCompare(b.d.INSTNM));
   let last=null,lr=0; items.forEach((it,i)=>{const sc=Math.round(it.score*1e6); if(sc!==last){lr=i+1;last=sc} it.rank=lr; it.pos=i});
@@ -464,7 +479,7 @@ function rkLayout(){
   return {k:Math.min(1,avail/(LW+n*cw+RK_LBL)),W:LW+n*cw+RK_LBL,nameX,nameW,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
 }
 function rkHistReal(k,b){ const s=rkStat(k),bins=Array(b).fill(0); for(const v of s.vals)bins[Math.min(b-1,Math.floor((v-s.lo)/((s.hi-s.lo)||1)*b))]++; return bins; }
-function rkLegend(){ $("lgRP").innerHTML=RK_TYPES.map(t=>`<span><b style="font-size:13px">${RK_GLYPH[t]}</b> ${t}</span>`).join(""); }
+function rkLegend(){ $("lgRP").innerHTML=RK_TYPES.map(t=>`<span><b style="font-size:13px">${RK_GLYPH[t]}</b> ${t}</span>`).join("")+`<span><svg width="22" height="9" aria-hidden="true" style="vertical-align:-1px"><rect x=".7" y=".7" width="20.6" height="7.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 2"/></svg> ${TEXT.figure.legendEst}</span>`; }
 function renderRankHeader(){
   const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W*L.k).attr("height",RK_HH*L.k).attr("viewBox",`0 0 ${L.W} ${RK_HH}`); /* L.k < 1 on narrow windows: the whole figure is scaled down so it always fits and the school names stay visible */
   let g=svg.select("g.main"); if(g.empty())g=svg.append("g").attr("class","main");
@@ -515,7 +530,7 @@ function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).leng
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* Hover box of a school: name, place, rank and score, then one line per variable: the school's 0–100% mark (100% = best school in the data; direction already taken into account). */
 const rkTip=it=>{const d=it.d,R=S.rank; /* it.parts[i] = this school's share of the score from variable R.fig[i]; points = part x 100, maximum = weight share x 100 */
-  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map((c,i)=>TEXT.figure.tipVar(esc(RKA.get(c.k).short),Math.round(rkNorm(c,d[c.k])*100))).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
+  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map(c=>{ const x=it.v[c.k]; return x==null?TEXT.figure.tipVarNone(esc(RKA.get(c.k).short)):TEXT.figure.tipVar(esc(RKA.get(c.k).short),Math.round(rkNorm(c,x)*100))+(it.est.has(c.k)?TEXT.figure.tipEst:"")}).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
 /* Each pinned school gets one colour (slot 0-7 = --pin0 ... --pin7 in css/style.css); a colour stays with its school until it is unpinned. Maximum 8 pins. */
 const RK_MAXPINS=8;
 const rkPinCol=id=>{const s=S.rank.slot.get(id); return s==null?"var(--dot)":`var(--pin${s})`};
@@ -527,7 +542,7 @@ function rkPinUI(){ const R=S.rank,hid=R.pins.filter(id=>!R.items.some(it=>it.d.
 function renderRankBody(){
   const R=S.rank,L=rkLayout(),RH=RK_RH,n=R.fig.length,N=Math.max(1,R.nrows),pinned=new Set(R.pins),svg=d3.select("#rkSvg");
   const top=R.items.slice(0,N),extra=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(it=>it&&it.pos>=N).sort((a,b)=>a.pos-b.pos),left=top.concat(extra);
-  const best=(c,a,b)=>c.dir>0?b.d[c.k]-a.d[c.k]:a.d[c.k]-b.d[c.k];
+  const bv=(it,c)=>it.v[c.k]==null?(c.dir>0?-Infinity:Infinity):it.v[c.k], best=(c,a,b)=>c.dir>0?bv(b,c)-bv(a,c):bv(a,c)-bv(b,c);
   const lists=R.fig.map(c=>{ if(R.mode!=="all")return left.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos);
     const all=R.items.slice().sort((a,b)=>best(c,a,b)||a.pos-b.pos),t=all.slice(0,N),have=new Set(t.map(it=>it.d.UNITID)); return t.concat(all.filter(it=>pinned.has(it.d.UNITID)&&!have.has(it.d.UNITID))); });
   const rowsN=Math.max(1,left.length,...lists.map(l=>l.length)),H=rowsN*RH+6,P0=new Map(left.map((it,i)=>[it.d.UNITID,i])),P=lists.map(l=>new Map(l.map((it,i)=>[it.d.UNITID,i])));
@@ -545,11 +560,11 @@ function renderRankBody(){
       g.append("rect").attr("class","trk").attr("y",14).attr("height",9).attr("fill","var(--soft)"); g.append("rect").attr("class","bar").attr("y",14).attr("height",9); g.append("text").attr("class","tag").attr("y",22).attr("text-anchor","start").style("font-size","11.5px").style("fill","var(--fg)").style("pointer-events","none"); return g});
   T(cg).attr("transform",o=>`translate(${L.x0(o.j)},${o.y})`);
   cg.select("rect.band").attr("width",L.tw+8); cg.select("text.tag").attr("x",L.tw+10); cg.select("rect.trk").attr("width",L.tw);
-  cg.select("text.val").text(o=>rkFmt(R.fig[o.j].k,o.it.d[R.fig[o.j].k])).attr("x",0);
-  cg.select("rect.bar").attr("fill","var(--gry2)").attr("width",o=>{const c=R.fig[o.j],s=rkStat(c.k); return Math.max(1.5,Math.min(1,o.it.d[c.k]/(s.hi||1))*L.tw)});
-  cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.fig[o.j],it=o.it,d=it.d; let h=rkTip(it); h=h.replace('<br><span class="tiph">',`<br>${TEXT.figure.tipCell(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low)}<br><span class="tiph">`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
+  cg.select("text.val").text(o=>{const k=R.fig[o.j].k,x=o.it.v[k]; return x==null?TEXT.figure.noData:(o.it.est.has(k)?"~":"")+rkFmt(k,x)}).attr("x",0);
+  cg.select("rect.bar").attr("fill","var(--gry2)").attr("width",o=>{const c=R.fig[o.j],s=rkStat(c.k); return o.it.v[c.k]==null?0:Math.max(1.5,rkFrac(c.k,o.it.v[c.k])*L.tw)});
+  cg.on("mousemove",(e,o)=>{ rkHover(o.id); const c=R.fig[o.j],it=o.it,d=it.d; let h=rkTip(it),nm=esc(RKA.get(c.k).short),x=it.v[c.k],ex=it.est.has(c.k)?TEXT.figure.tipCellEst(nm,rkFmt(c.k,x),d.Control):x==null?TEXT.figure.tipCellNone(nm):TEXT.figure.tipCell(nm,rkFmt(c.k,x),c.dir>0?TEXT.figure.best.high:TEXT.figure.best.low); h=h.replace('<br><span class="tiph">',`<br>${ex}<br><span class="tiph">`); showTip(e,h)}).on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,o)=>rkPin(o.id));
   const mg=svg.select("g.med"); mg.selectAll("*").remove();
-  R.fig.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+Math.min(1,med/(s.hi||1))*L.tw;
+  R.fig.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+rkFrac(c.k,med)*L.tw;
     mg.append("line").attr("x1",x).attr("x2",x).attr("y1",0).attr("y2",H-4).attr("stroke","var(--muted)").attr("stroke-dasharray","3 3").attr("stroke-opacity",.6).style("pointer-events","none").append("title").text(TEXT.figure.medianTip(R.items.length,rkFmt(c.k,med))); });
   // left block: the LineUp-style ranking
   const rg=svg.select("g.left").selectAll("g.row").data(left,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row").attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`); g.append("rect").attr("class","hit").attr("height",RH-2); g.append("text").attr("class","chg").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").style("pointer-events","none"); g.append("path").attr("class","tdot").style("pointer-events","none"); g.append("text").attr("class","nmx").style("font-size","12.5px").style("pointer-events","none");   return g});
@@ -570,7 +585,8 @@ function rkFigStyle(){
   const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,hc=rkNextCol(),hp=h!=null&&pins.has(h),on=id=>pins.has(id)||id===h;
   svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();
   svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.85:1);
-  svg.selectAll("g.cell rect.bar").style("fill",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:any?"var(--gry2)":null);
+  const isEst=o=>o.it.est.has(R.fig[o.j].k),barCol=o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--gry2)";
+  svg.selectAll("g.cell rect.bar").style("fill",o=>isEst(o)?"none":pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:any?"var(--gry2)":null).style("stroke",o=>isEst(o)?barCol(o):null).style("stroke-width",o=>isEst(o)?1.4:null).style("stroke-dasharray",o=>isEst(o)?"3 2":null);
   /* pinned schools: bigger, bold values and thicker bars */
   svg.selectAll("g.cell text.val").style("font-size",o=>pins.has(o.id)?"12.5px":"10.5px").style("font-weight",o=>pins.has(o.id)?700:400).attr("y",o=>pins.has(o.id)?12.5:11);
   svg.selectAll("g.cell rect.trk, g.cell rect.bar").attr("y",function(){return pins.has(this.parentNode.__data__.id)?15:14}).attr("height",function(){return pins.has(this.parentNode.__data__.id)?10:9});
@@ -587,10 +603,10 @@ function rkFigStyle(){
 function rkHistMark(){
   const R=S.rank,L=rkLayout(),pinIts=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(Boolean),hovIt=R.hov!=null?R.items.find(it=>it.d.UNITID===R.hov):null,B=14;
   d3.selectAll("#rkHead g.hc").each(function(c){ const j=R.fig.indexOf(c); if(j<0)return; const gh=d3.select(this),s=rkStat(c.k),x0=L.x0(j),span=(s.hi-s.lo)||1,bi=v=>Math.min(B-1,Math.floor((v-s.lo)/span*B));
-    const mk=new Set(pinIts.map(it=>bi(it.d[c.k]))),hb=hovIt?bi(hovIt.d[c.k]):-1,any=mk.size>0||hb>=0;
+    const pv=pinIts.filter(it=>it.v[c.k]!=null),hv=hovIt&&hovIt.v[c.k]!=null?hovIt:null,mk=new Set(pv.map(it=>bi(it.v[c.k]))),hb=hv?bi(hv.v[c.k]):-1,any=mk.size>0||hb>=0;
     gh.selectAll("g.hbars rect").attr("fill-opacity",(d,i)=>any?(mk.has(i)||i===hb?1:.4):.6).attr("stroke",(d,i)=>mk.has(i)||i===hb?"var(--fg)":"none").attr("stroke-width",1.2);
     const mg=gh.select("g.hmark"); mg.selectAll("*").remove();
-    const ticks=pinIts.map(it=>({x:x0+(it.d[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hovIt?[{x:x0+(hovIt.d[c.k]-s.lo)/span*L.tw,col:rkNextCol()}]:[]);
+    const ticks=pv.map(it=>({x:x0+(it.v[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hv?[{x:x0+(hv.v[c.k]-s.lo)/span*L.tw,col:rkNextCol()}]:[]);
     for(const k of ticks){ mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke","var(--panel)").attr("stroke-width",4.5); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",RK_HY0+1).attr("r",3.6).attr("fill",k.col).attr("stroke","var(--panel)").attr("stroke-width",1.2); }
   });
 }
@@ -675,6 +691,9 @@ function rkSetup(){
   $("rkClear").addEventListener("click",()=>{const R=S.rank; R.geoBox=null; rkMapClearBrush(); R.ranges={}; R.q=""; R.type="All"; R.group=""; R.field=""; R.region=""; R.state=""; rkApplyField(); rkFillField(); rkFillRegion(); $("rkQ").value=""; rkSyncControls(); rkUpdate(true,{track:false})});
   $("rkQ").addEventListener("input",e=>{S.rank.q=e.target.value; later(()=>rkUpdate(false,{track:false}))});
   rkFillAdd(); rkFillFilterAdd();
+  const hs=$("rkHome"); [["",TEXT.weights.homeNone]].concat([...new Set(rows.map(d=>d.STABBR))].sort((a,b)=>(RK_STN[a]||a).localeCompare(RK_STN[b]||b)).map(a=>[a,RK_STN[a]||a])).forEach(([v,l])=>{const e=document.createElement("option"); e.value=v; e.textContent=l; hs.appendChild(e)});
+  const homeNote=()=>{ $("rkHomeNote").textContent=RKH.state?TEXT.weights.homeNote(RK_STN[RKH.state]||RKH.state):TEXT.weights.homeNoteNone; }; homeNote();
+  hs.addEventListener("change",e=>{ RKH.state=e.target.value; rkSetTuition(); delete S.rank.ranges.Tuition; rkWSig=null; homeNote(); rkUpdate(true,{track:false}); rkFillFilterAdd(); });
 }
 let rkFirst=true;
 function renderRank(){ rkCompute(false);

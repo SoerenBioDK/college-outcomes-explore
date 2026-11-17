@@ -1,11 +1,12 @@
 # College Outcomes Explorer
 
-Interactive D3.js visualization of the U.S. College Scorecard ("Most Recent Cohorts – Institution"), for a student from abroad who wants to pick a U.S. school. Data Visualization course project (report and video due 11 Dec 2026).
+Interactive D3.js visualization of the U.S. College Scorecard ("Most Recent Cohorts – Institution"), for a young student in the U.S. who wants to pick a Bachelor's-degree school. Data Visualization course project (report and video due 11 Dec 2026).
 
 **Current scope: one figure, "Rank schools".** The other panels (explore, for whom, find) were removed on purpose to keep things simple; a full 4-panel backup exists (see `docs/panels.md`).
 
 ## What it does
-- You choose which variables matter to you (earnings, completion, retention, tuition, debt, ...) and how much (importance 0–10).
+- You choose which variables matter to you (default: earnings 10 years after entry, completion, tuition, graduate debt; more can be added) and how much (importance 0–10).
+- You pick your home state. **Tuition** is then the in-state price for public schools in your state and the out-of-state price for every other school (private schools charge everyone the same). With no home state chosen, the out-of-state price is used and the name shows a * .
 - Every Bachelor's school gets a score from 0 to 100 and the top 15 are shown, one column per variable, most important to the left.
 - You can narrow the schools with filters (field of study, school type, name, region/state or a map box, and a lowest/highest value for any variable).
 - You pin schools (max 8) to follow them across the columns: each gets its own colour and a line. Hover a school to see its rank, score and its 0–100% mark per variable.
@@ -13,9 +14,9 @@ Interactive D3.js visualization of the U.S. College Scorecard ("Most Recent Coho
 
 ## How the rank is calculated (short)
 1. Importance values (0–10) become shares that add up to 100%.
-2. Each value is scaled 0–1 between the lowest and highest value among all Bachelor's schools in the data (reversed where lower is better, e.g. tuition, debt). Filters never change this scale.
+2. Each value is scaled 0–1 between the lowest and highest value among all Bachelor's schools in the data (reversed where lower is better, e.g. tuition, debt). Filters never change this scale; only the home state does, because it changes the tuition values scale.
 3. Score = sum of share × scaled value, shown out of 100. Highest score = rank 1; equal scores share a rank (the next rank is skipped).
-4. Schools without a value for a chosen variable are not ranked. Service academies are always excluded.
+4. A school that lacks one chosen variable is still ranked: the missing value is replaced by the median of schools of the same type (public, private nonprofit, private for-profit), and the cell is drawn dashed with a "~" before the value (idea from LineUp, section 4.7). A school lacking two or more chosen variables is not ranked. A variable with importance 0 is ignored. Service academies are always excluded.
 
 ## Open it
 Double-click `index.html`. It works from disk and on GitHub Pages (needs internet for D3 and TopoJSON from a CDN). No build step is needed for normal editing.
