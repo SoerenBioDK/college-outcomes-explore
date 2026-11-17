@@ -244,8 +244,8 @@ const TEXT = {
     histTip: long => `${long}. The histogram shows all schools; drag on it to keep only schools in that range.`,
     medianTip: (n, value) => `Median of the ${n} ranked schools: ${value}`,
     // hover text on a school
-    tipHead: "Value · points / most possible:",
-    tipVar: (name, value, points, max) => `${name}: ${value} · <b>${points}</b> / ${max}`,
+    tipHead: "Per variable (100% = best school):",
+    tipVar: (name, pct) => `${name}: <b>${pct}%</b>`,
     tipRank: (rank, score) => `Rank ${rank} · score ${score} of 100`,
     tipPin: pinned => `Click to ${pinned ? "unpin" : "pin"} this school`,
     tipCell: (name, value, best) => `<b>${name}</b>: ${value} (${best} is best)`,
@@ -523,9 +523,9 @@ function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); }
 function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0)+(R.fieldSet?1:0)+(R.region?1:0)+(R.state?1:0);
   $("sR").textContent=TEXT.filters.count(n); $("sR").title=TEXT.filters.countTip(n,rows.length,R.cols.length); }
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* Hover box of a school: name, place, rank and score, then one line per variable: value · points / most possible points. */
+/* Hover box of a school: name, place, rank and score, then one line per variable: the school's 0–100% mark (100% = best school in the data; direction already taken into account). */
 const rkTip=it=>{const d=it.d,R=S.rank; /* it.parts[i] = this school's share of the score from variable R.fig[i]; points = part x 100, maximum = weight share x 100 */
-  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map((c,i)=>TEXT.figure.tipVar(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),(it.parts[i]*100).toFixed(1),(c.w*100).toFixed(1))).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
+  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map((c,i)=>TEXT.figure.tipVar(esc(RKA.get(c.k).short),Math.round(rkNorm(c,d[c.k])*100))).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
 /* Each pinned school gets one colour (slot 0-7 = --pin0 ... --pin7 in css/style.css); a colour stays with its school until it is unpinned. Maximum 8 pins. */
 const RK_MAXPINS=8;
 const rkPinCol=id=>{const s=S.rank.slot.get(id); return s==null?"var(--dot)":`var(--pin${s})`};
