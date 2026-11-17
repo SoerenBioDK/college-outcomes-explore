@@ -46,6 +46,8 @@ input[type=range]{width:150px;accent-color:var(--accent)}
 .panel h3{margin:0;font-size:15px;font-weight:600;line-height:1.3;text-wrap:balance}
 .panel .sub{margin:0;font-size:12px;color:var(--muted)}
 .panel .sub:empty{display:none}
+/* home-state panel at the top: a ColorBrewer Blues outline while no state is chosen, so it is clear that this choice matters */
+.panel.home.need{border:2px solid #3182bd}
 .hrow{display:flex;gap:8px;align-items:flex-start;min-width:0}
 
 /* ---------- round "i" button and its pop-up (text: js/texts.js, TEXT.info) ---------- */
@@ -118,6 +120,12 @@ svg text{fill:var(--fg)}
 
   <!-- left column: filters, importance sliders, region/state + map -->
   <div class="rkside">
+    <section class="panel home need" id="rkHomeBox" aria-label="Your home state">
+      <h3 data-text="home.title"></h3>
+      <select id="rkHome" aria-label="Your home state"></select>
+      <p class="sub" id="rkHomeNote"></p>
+    </section>
+
     <section class="panel crit" aria-label="Filters">
       <h3 id="tR" data-text="filters.title"></h3><p class="cnt" id="sR"></p>
       <div class="field"><label for="rkField" data-text="filters.field"></label><select id="rkField"></select></div>
@@ -136,7 +144,6 @@ svg text{fill:var(--fg)}
       <h3 id="tW" data-text="weights.title"></h3><p class="sub" style="margin:0" data-text="weights.hint"></p>
       <div id="rkW"></div>
       <div class="rkctl"><select id="rkAdd" aria-label="Add a variable"></select><button type="button" id="rkReset" data-text="weights.equal"></button></div>
-      <div class="field"><label for="rkHome" data-text="weights.homeLabel"></label><select id="rkHome"></select><p class="sub" id="rkHomeNote" style="margin:4px 0 0"></p></div>
     </section>
 
     <section class="panel" aria-label="Region, state and map">
@@ -207,14 +214,18 @@ const TEXT = {
   },
 
   /* ---------- left panel 2: importance sliders ---------- */
+  /* ---------- top of the left column: home state (decides the tuition price) ---------- */
+  home: {
+    title: "Your home state"
+  },
+
   weights: {
     title: "What matters to you",
     hint: "0 = ignore · 10 = very important",
     add: "+ Add a variable",
     equal: "Equal",
-    homeLabel: "Your home state (for tuition)",
-    homeNone: "Not chosen",
-    homeNoteNone: "* No home state chosen, so tuition is the out-of-state price.",
+    homeNone: "Choose your state",
+    homeNoteNone: "* No home state chosen yet, so tuition is the out-of-state price for every school.",
     homeNote: name => `Tuition is the in-state price for public schools in ${name} and the out-of-state price for all other schools.`
   },
 
@@ -298,7 +309,7 @@ const VARIABLES=[
  ["Completion_rate","Completion","Completion rate",1,"%"],
  ["Retention_rate","Retention","First-year retention rate",1,"%"],
  ["Grad_debt","Grad debt","Median federal-loan debt of graduates",-1,"$"],
- ["Tuition","Tuition","Tuition and required fees per year. For public schools in your home state this is the in-state price, for all other schools the out-of-state price (choose your home state under \"What matters to you\")",-1,"$"],
+ ["Tuition","Tuition","Tuition and required fees per year. For public schools in your home state this is the in-state price, for all other schools the out-of-state price (choose your home state in the top panel)",-1,"$"],
  ["Cost_of_attendance","Cost of attendance","Cost of attendance per year (tuition, housing, books)",-1,"$"],
  ["Net_price","Net price (after grants)","Average yearly price after grants and scholarships, for students with U.S. federal aid. Public schools: in-state students only",-1,"$"],
  ["Default_2yr","Default rate","Loan default rate, 2 yrs after repayment starts (about half of schools)",-1,"%"],
@@ -692,7 +703,7 @@ function rkSetup(){
   $("rkQ").addEventListener("input",e=>{S.rank.q=e.target.value; later(()=>rkUpdate(false,{track:false}))});
   rkFillAdd(); rkFillFilterAdd();
   const hs=$("rkHome"); [["",TEXT.weights.homeNone]].concat([...new Set(rows.map(d=>d.STABBR))].sort((a,b)=>(RK_STN[a]||a).localeCompare(RK_STN[b]||b)).map(a=>[a,RK_STN[a]||a])).forEach(([v,l])=>{const e=document.createElement("option"); e.value=v; e.textContent=l; hs.appendChild(e)});
-  const homeNote=()=>{ $("rkHomeNote").textContent=RKH.state?TEXT.weights.homeNote(RK_STN[RKH.state]||RKH.state):TEXT.weights.homeNoteNone; }; homeNote();
+  const homeNote=()=>{ $("rkHomeNote").textContent=RKH.state?TEXT.weights.homeNote(RK_STN[RKH.state]||RKH.state):TEXT.weights.homeNoteNone; $("rkHomeBox").classList.toggle("need",!RKH.state); }; homeNote();
   hs.addEventListener("change",e=>{ RKH.state=e.target.value; rkSetTuition(); delete S.rank.ranges.Tuition; rkWSig=null; homeNote(); rkUpdate(true,{track:false}); rkFillFilterAdd(); });
 }
 let rkFirst=true;
