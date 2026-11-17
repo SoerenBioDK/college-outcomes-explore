@@ -12,15 +12,15 @@
    ============================================================================ */
 :root{
   --bg:#f6f7f8; --panel:#ffffff; --fg:#1f2428; --muted:#5d666e; --line:#d9dde1; --soft:#eef0f2;
-  --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --gry2:#969696; --median:#252525; --dot:#252525; --pin0:#1b9e77; --pin1:#d95f02; --pin2:#7570b3; --pin3:#e7298a; --pin4:#66a61e; --pin5:#e6ab02; --pin6:#a6761d; --pin7:#666666; /* pinned schools: ColorBrewer Dark2 */
+  --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --gry2:#737373; --median:#252525; --dot:#252525; --pin0:#1b9e77; --pin1:#d95f02; --pin2:#7570b3; --pin3:#e7298a; --pin4:#66a61e; --pin5:#e6ab02; --pin6:#a6761d; --pin7:#666666; /* pinned schools: ColorBrewer Dark2 */
   --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#969696; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}}
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#bdbdbd; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#969696; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}
+  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#bdbdbd; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}
 
 /* ---------- page ---------- */
 *{box-sizing:border-box}
@@ -106,6 +106,7 @@ svg text{fill:var(--fg)}
 .hf .x{border:0;background:none;padding:0;color:var(--muted);font-size:12px}
 .hf .hs{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 6px;align-items:center;font-size:11px;color:var(--muted);margin-top:4px}
 .hf .hs input{width:100%;margin:0}
+.tip .tiph{opacity:.75;font-size:11px}
 
 </style>
 </head>
@@ -231,15 +232,13 @@ const TEXT = {
     title: "Your ranking, and what it means in real numbers",
     clearPins: "Clear pins",
     pinNone: "Click a school to pin it",
+    pinStart: " · your top 3 to start; click any school to pin or unpin it",
     pinSome: (n, hidden) => `${n} pinned${hidden ? ` (${hidden} filtered out)` : ""}`,
     // header above the ranking (left half)
     headTitle: "Your ranking",
     headSub: "by your weights",
     headRank: "Rank",
     headSchool: "School",
-    headBars: "Score by variable",
-    headScore: "Score",
-    headScoreTip: "Total weighted score, 0 to 100 (sum of the parts of the bar)",
     // header above each variable column (right half)
     highBest: "↑ high = best",
     lowBest: "↓ low = best",
@@ -248,7 +247,8 @@ const TEXT = {
     // hover text on a school
     tipRank: (rank, score) => `Rank ${rank} · score ${score} of 100`,
     tipPin: pinned => `Click to ${pinned ? "unpin" : "pin"} this school`,
-    tipPart: (name, norm, share, points) => `<b>${name}</b> → ${norm}/100 × share ${share}% = ${points} points`,
+    tipHead: "Value · points / most possible:",
+    tipVar: (name, value, points, max) => `${name}: ${value} · <b>${points}</b> / ${max}`,
     tipCell: (name, value, best) => `<b>${name}</b>: ${value} (${best} is best)`,
     best: { high: "highest", low: "lowest" },
     outsideBox: "Outside the map selection"
@@ -276,11 +276,11 @@ const TEXT = {
       "Drag a box to rank only the schools inside it. Schools outside the 50 states and DC cannot be drawn.",
 
     figure:
-      "Left: the top 15 schools in rank order. The bar is the score: one part per variable, in the same order as the columns (light and dark grey alternate); the number after the bar is the total score (0 to 100). " +
+      "Left: the top 15 schools in rank order (rank, school type, name). Hover a school to see its total score (0 to 100) and how many points each variable gave it. " +
       "Right: one column per variable, ordered by how much it matters to you (most important at the left). Each column sorts the same 15 schools by that variable. " +
       "Above each bar is the real value; bars start at zero on the same scale for all schools; the dashed line is the median of all ranked schools. " +
       "The histogram under each variable name shows all schools: drag on it to keep only schools in that range. " +
-      "Hover a school to see its line across the columns. Click a school to pin it (up to 8): it gets its own colour, its line stays visible, its values become bigger and its name appears after the last column. Lines of other schools are hidden. " +
+      "Hover a school to see its line across the columns. The first view has your top 3 pinned. Click a school to pin or unpin it (up to 8): it gets its own colour, its line stays visible, its values become bigger and its name appears after the last column. Lines of other schools are hidden. " +
       "This is not an official ranking: the weights are yours, and only schools with a value for every chosen variable are ranked."
   }
 };
@@ -475,8 +475,8 @@ const rkHi=()=>{const R=S.rank; return R.pins.length?R.items.filter(it=>R.pins.i
 function rkSetWeights(ws){ const t=d3.sum(ws); S.rank.cols.forEach((c,i)=>c.w=ws[i]/t); }
 function rkLines(t,m){ if(m<4)return[]; const cut=s=>s.length>m?s.slice(0,m-1)+"…":s; if(t.length<=m)return[t]; const w=t.split(" "); let a=w[0],i=1; while(i<w.length&&(a+" "+w[i]).length<=m){a+=" "+w[i];i++} const b=w.slice(i).join(" "); return [cut(a),b?cut(b):""]; }
 function rkLayout(){
-  const n=S.rank.cols.length,avail=Math.round($("rkWrap").clientWidth||900),nameX=60,nameW=180,barX=nameX+nameW+8,bw=110,scX=barX+bw+6,LW=scX+30,gap=30,cw=Math.max(100,Math.floor((avail-LW-RK_LBL)/n)),tw=cw-gap;
-  return {k:Math.min(1,avail/(LW+n*cw+RK_LBL)),W:LW+n*cw+RK_LBL,nameX,nameW,barX,bw,scX,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
+  const n=S.rank.cols.length,avail=Math.round($("rkWrap").clientWidth||900),nameX=60,nameW=210,LW=nameX+nameW+14,gap=30,cw=Math.max(100,Math.floor((avail-LW-RK_LBL)/n)),tw=cw-gap;
+  return {k:Math.min(1,avail/(LW+n*cw+RK_LBL)),W:LW+n*cw+RK_LBL,nameX,nameW,LW,cw,gap,tw,x0:j=>LW+j*cw+gap};
 }
 function rkHistReal(k,b){ const s=rkStat(k),bins=Array(b).fill(0); for(const v of s.vals)bins[Math.min(b-1,Math.floor((v-s.lo)/((s.hi-s.lo)||1)*b))]++; return bins; }
 function rkLegend(){ $("lgRP").innerHTML=RK_TYPES.map(t=>`<span><b style="font-size:13px">${RK_GLYPH[t]}</b> ${t}</span>`).join(""); }
@@ -484,18 +484,17 @@ function renderRankHeader(){
   const R=S.rank,L=rkLayout(),svg=d3.select("#rkHead").attr("width",L.W*L.k).attr("height",RK_HH*L.k).attr("viewBox",`0 0 ${L.W} ${RK_HH}`); /* L.k < 1 on narrow windows: the whole figure is scaled down so it always fits and the school names stay visible */
   let g=svg.select("g.main"); if(g.empty())g=svg.append("g").attr("class","main");
   const lab=(cls,x,y,t,anchor,big)=>{let e=g.select("text."+cls); if(e.empty())e=g.append("text").attr("class",cls).style("fill",big?"var(--fg)":"var(--muted)").style("font-size",big?"14px":"11px").style("font-weight",big?700:600); e.attr("x",x).attr("y",y).attr("text-anchor",anchor||"start").text(t)};
-  lab("ttl",4,16,TEXT.figure.headTitle,"start",true); lab("ttl2",4,31,TEXT.figure.headSub); lab("hrank",L.nameX-22,RK_HH-6,TEXT.figure.headRank,"end"); lab("hname",L.nameX,RK_HH-6,TEXT.figure.headSchool); lab("hbar",L.barX,RK_HH-6,TEXT.figure.headBars); lab("hsc",L.scX,RK_HH-6,TEXT.figure.headScore); g.select("text.hsc").selectAll("title").data([1]).join("title").text(TEXT.figure.headScoreTip);
+  lab("ttl",4,16,TEXT.figure.headTitle,"start",true); lab("ttl2",4,31,TEXT.figure.headSub); lab("hrank",L.nameX-22,RK_HH-6,TEXT.figure.headRank,"end"); lab("hname",L.nameX,RK_HH-6,TEXT.figure.headSchool); 
   // right side: one header per variable (name, direction, histogram of all schools with a range brush)
-  g.selectAll("g.hc").data(R.fig,c=>c.k).join(e=>{const h=e.append("g").attr("class","hc"); h.append("rect").attr("class","top").attr("height",6); h.append("text").attr("class","nm1").style("font-size","12px").style("font-weight",700); h.append("text").attr("class","nm2").style("font-size","12px").style("font-weight",700);
+  g.selectAll("g.hc").data(R.fig,c=>c.k).join(e=>{const h=e.append("g").attr("class","hc"); h.append("text").attr("class","nm1").style("font-size","12px").style("font-weight",700); h.append("text").attr("class","nm2").style("font-size","12px").style("font-weight",700);
       h.append("g").attr("class","dirb").attr("role","button").attr("tabindex",0).style("cursor","pointer").append("text").style("font-size","10.5px").style("fill","var(--muted)");
       h.append("g").attr("class","hbars"); h.append("g").attr("class","brush"); h.append("g").attr("class","hmark").style("pointer-events","none"); h.append("text").attr("class","lo").style("font-size","10px").style("fill","var(--muted)"); h.append("text").attr("class","hi").attr("text-anchor","end").style("font-size","10px").style("fill","var(--muted)"); h.append("title"); return h})
    .each(function(c,j){ const h=d3.select(this),x0=L.x0(j),tw=L.tw,s=rkStat(c.k),a=RKA.get(c.k),ln=rkLines(a.short,Math.floor((tw-4)/6.6));
-    h.select("rect.top").attr("x",x0).attr("y",0).attr("width",tw).attr("fill","var(--gry2)");
     h.select("text.nm1").attr("x",x0).attr("y",22).text(ln[0]||""); h.select("text.nm2").attr("x",x0).attr("y",35).text(ln[1]||"");
     h.select("g.dirb").attr("transform",`translate(${x0},49)`).attr("aria-label",`${a.short}: ${c.dir>0?"highest":"lowest"} is best. Press to flip.`).select("text").text(c.dir>0?TEXT.figure.highBest:TEXT.figure.lowBest);
     h.select("g.dirb").on("click",()=>{c.dir=-c.dir;rkUpdate(true,{animate:true})}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;rkUpdate(true,{animate:true})}});
     const bins=rkHistReal(c.k,14),mx=d3.max(bins)||1,bwid=tw/bins.length;
-    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill","var(--gry)").attr("fill-opacity",.85);
+    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill","var(--gry2)").attr("fill-opacity",.6);
     h.select("text.lo").attr("x",x0).attr("y",RK_HH-6).text(rkCompact(c.k,s.lo)); h.select("text.hi").attr("x",x0+tw).attr("y",RK_HH-6).text(rkCompact(c.k,s.hi));
     h.select("title").text(TEXT.figure.histTip(a.long));
     const sx=d3.scaleLinear([s.lo,s.hi],[x0,x0+tw]),br=d3.brushX().extent([[x0,RK_HY0-2],[x0+tw,RK_HY1]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=e.selection.map(sx.invert).sort(d3.ascending); rkUpdate(false,{track:false}); });
@@ -529,13 +528,16 @@ function rkLinked(light){ rkMapUpdate(); rkPinUI(); rkFigStyle(); }
 function rkCount(){ const R=S.rank,n=R.items.length,f=Object.keys(R.ranges).length+(R.type!=="All")+(R.q.trim()?1:0)+(R.geoBox?1:0)+(R.fieldSet?1:0)+(R.region?1:0)+(R.state?1:0);
   $("sR").textContent=TEXT.filters.count(n); $("sR").title=TEXT.filters.countTip(n,rows.length,R.cols.length); }
 const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-const rkTip=it=>{const d=it.d; return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br>`+S.rank.fig.map(c=>`${esc(RKA.get(c.k).short)}: ${rkFmt(c.k,d[c.k])}`).join("<br>")+`<br><i>${TEXT.figure.tipPin(S.rank.pins.includes(d.UNITID))}</i>`};
+const rkTip=it=>{const d=it.d,R=S.rank; /* it.parts[i] = this school's share of the score from variable R.fig[i]; points = part x 100, maximum = weight share x 100 */
+  return `<b>${esc(d.INSTNM)}</b><br>${esc(d.CITY)}, ${esc(d.STABBR)} · ${esc(d.Control)}<br>${TEXT.figure.tipRank(it.rank,(it.score*100).toFixed(1))}<br><span class="tiph">${TEXT.figure.tipHead}</span><br>`+R.fig.map((c,i)=>TEXT.figure.tipVar(esc(RKA.get(c.k).short),rkFmt(c.k,d[c.k]),(it.parts[i]*100).toFixed(1),(c.w*100).toFixed(1))).join("<br>")+`<br><i>${TEXT.figure.tipPin(R.pins.includes(d.UNITID))}</i>`};
 /* Each pinned school gets one colour (slot 0-7 = --pin0 ... --pin7 in css/style.css); a colour stays with its school until it is unpinned. Maximum 8 pins. */
 const RK_MAXPINS=8;
 const rkPinCol=id=>{const s=S.rank.slot.get(id); return s==null?"var(--dot)":`var(--pin${s})`};
-function rkPin(id){ const R=S.rank,i=R.pins.indexOf(id); if(i>=0){R.pins.splice(i,1); R.slot.delete(id)} else {if(R.pins.length>=RK_MAXPINS)R.slot.delete(R.pins.shift()); R.pins.push(id); const used=new Set(R.slot.values()); let s=0; while(used.has(s))s++; R.slot.set(id,s)} hideTip(); renderRankBody(); rkLinked(true); }
+/* colour a hovered (not yet pinned) school would get if you pinned it: the lowest free slot, or the slot of the oldest pin when all 8 are used */
+function rkNextCol(){ const R=S.rank,used=new Set(R.slot.values()); let s=0; while(used.has(s))s++; if(s>=RK_MAXPINS)s=R.slot.get(R.pins[0]); return `var(--pin${s})`; }
+function rkPin(id){ const R=S.rank,i=R.pins.indexOf(id); R.startPins=false; if(i>=0){R.pins.splice(i,1); R.slot.delete(id)} else {if(R.pins.length>=RK_MAXPINS)R.slot.delete(R.pins.shift()); R.pins.push(id); const used=new Set(R.slot.values()); let s=0; while(used.has(s))s++; R.slot.set(id,s)} hideTip(); renderRankBody(); rkLinked(true); }
 function rkPinUI(){ const R=S.rank,hid=R.pins.filter(id=>!R.items.some(it=>it.d.UNITID===id)).length; $("rkPinClear").style.display=R.pins.length?null:"none";
-  $("rkPinNote").textContent=R.pins.length?TEXT.figure.pinSome(R.pins.length,hid):TEXT.figure.pinNone; }
+  $("rkPinNote").textContent=R.pins.length?TEXT.figure.pinSome(R.pins.length,hid)+(R.startPins?TEXT.figure.pinStart:""):TEXT.figure.pinNone; }
 function renderRankBody(){
   const R=S.rank,L=rkLayout(),RH=RK_RH,n=R.fig.length,N=Math.max(1,R.nrows),pinned=new Set(R.pins),svg=d3.select("#rkSvg");
   const top=R.items.slice(0,N),extra=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(it=>it&&it.pos>=N).sort((a,b)=>a.pos-b.pos),left=top.concat(extra);
@@ -564,7 +566,7 @@ function renderRankBody(){
   R.fig.forEach((c,j)=>{ const s=rkStat(c.k),med=d3.median(R.items,it=>it.d[c.k]); if(med==null)return; const x=L.x0(j)+Math.min(1,med/(s.hi||1))*L.tw;
     mg.append("line").attr("x1",x).attr("x2",x).attr("y1",0).attr("y2",H-4).attr("stroke","var(--muted)").attr("stroke-dasharray","3 3").attr("stroke-opacity",.6).style("pointer-events","none").append("title").text(TEXT.figure.medianTip(R.items.length,rkFmt(c.k,med))); });
   // left block: the LineUp-style ranking
-  const rg=svg.select("g.left").selectAll("g.row").data(left,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row").attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`); g.append("rect").attr("class","hit").attr("height",RH-2); g.append("text").attr("class","chg").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").style("pointer-events","none"); g.append("path").attr("class","tdot").style("pointer-events","none"); g.append("text").attr("class","nmx").style("font-size","12.5px").style("pointer-events","none"); g.append("g").attr("class","stack").style("pointer-events","none"); g.append("text").attr("class","sc").style("font-size","11px").style("font-family","var(--mono)").style("pointer-events","none"); return g});
+  const rg=svg.select("g.left").selectAll("g.row").data(left,it=>it.d.UNITID).join(e=>{const g=e.append("g").attr("class","row").attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`); g.append("rect").attr("class","hit").attr("height",RH-2); g.append("text").attr("class","chg").style("font-size","10.5px").style("font-weight",700).style("font-family","var(--mono)").style("pointer-events","none"); g.append("text").attr("class","rk").attr("text-anchor","end").style("font-size","12px").style("font-family","var(--mono)").style("pointer-events","none"); g.append("path").attr("class","tdot").style("pointer-events","none"); g.append("text").attr("class","nmx").style("font-size","12.5px").style("pointer-events","none");   return g});
   T(rg).attr("transform",it=>`translate(0,${P0.get(it.d.UNITID)*RH})`);
   rg.select("rect.hit").attr("x",2).attr("y",1).attr("width",L.LW-4).attr("rx",3);
   rg.select("text.rk").attr("x",L.nameX-22).attr("y",18).style("fill","var(--muted)").text(it=>it.rank);
@@ -573,33 +575,27 @@ function renderRankBody(){
   const ch=rg.select("text.chg").interrupt().attr("x",2).attr("y",18).text(it=>{const d=dOf(it);return d?(d>0?"▲":"▼")+Math.abs(d):""}).style("fill",it=>dOf(it)>0?"var(--up)":"var(--dn)").attr("fill-opacity",it=>Math.min(1,.5+Math.abs(dOf(it))/25)*fade);
   if(live&&!reduced&&fade>0)ch.transition().duration(Math.max(0,3400-age)).ease(d3.easeLinear).attr("fill-opacity",0);
   rg.select("text.nmx").attr("x",L.nameX).attr("y",18).text(it=>{const m=Math.floor(L.nameW/6.6);return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
-  rg.each(function(it){ const sg=d3.select(this).select("g.stack"); let x=L.barX; const segs=it.parts.map((p,i)=>{const o={x,w:p*L.bw,c:R.fig[i]};x+=o.w;return o});
-    sg.selectAll("rect").data(segs).join("rect").attr("x",o=>o.x).attr("y",7).attr("height",RH-14).attr("width",o=>Math.max(0,o.w)).attr("fill",o=>R.fig.indexOf(o.c)%2?"var(--gry2)":"var(--gry)").attr("stroke","var(--panel)").attr("stroke-width",.6);
-    d3.select(this).select("text.sc").attr("x",L.scX).attr("y",18).style("fill","var(--muted)").text(Math.round(it.score*100)); });
-  rg.on("mousemove",function(e,it){ rkHover(it.d.UNITID); const [px]=d3.pointer(e,svg.node()); let x=L.barX,idx=-1; for(let i=0;i<it.parts.length;i++){const w=it.parts[i]*L.bw; if(px>=x&&px<x+w){idx=i;break} x+=w}
-      let html=rkTip(it); if(idx>=0){const c=R.fig[idx],d=it.d; html=html.replace("<br><i>",`<br>${TEXT.figure.tipPart(esc(RKA.get(c.k).short),(rkNorm(c,d[c.k])*100).toFixed(0),Math.round(c.w*100),(it.parts[idx]*100).toFixed(1))}<br><i>`)} showTip(e,html);})
+  rg.on("mousemove",function(e,it){ rkHover(it.d.UNITID); showTip(e,rkTip(it)); })
     .on("mouseleave",()=>{hideTip();rkHover(null)}).on("click",(e,it)=>rkPin(it.d.UNITID));
   const sp=svg.select("g.sep"); sp.selectAll("*").remove(); if(extra.length){ const y=top.length*RH; sp.append("line").attr("x1",4).attr("x2",L.LW-4).attr("y1",y).attr("y2",y).attr("stroke","var(--muted)").attr("stroke-dasharray","2 3"); }
   rkFigStyle();
 }
 function rkFigStyle(){
-  const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,hp=h!=null&&pins.has(h),on=id=>pins.has(id)||id===h;
-  svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?"var(--dot)":"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();
-  svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.6:1);
-  svg.selectAll("g.cell rect.bar").style("fill",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?"var(--dot)":any?"var(--gry)":null);
+  const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,hc=rkNextCol(),hp=h!=null&&pins.has(h),on=id=>pins.has(id)||id===h;
+  svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();
+  svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.85:1);
+  svg.selectAll("g.cell rect.bar").style("fill",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:any?"var(--gry2)":null);
   /* pinned schools: bigger, bold values and thicker bars */
   svg.selectAll("g.cell text.val").style("font-size",o=>pins.has(o.id)?"12.5px":"10.5px").style("font-weight",o=>pins.has(o.id)?700:400).attr("y",o=>pins.has(o.id)?12.5:11);
   svg.selectAll("g.cell rect.trk, g.cell rect.bar").attr("y",function(){return pins.has(this.parentNode.__data__.id)?15:14}).attr("height",function(){return pins.has(this.parentNode.__data__.id)?10:9});
-  svg.selectAll("g.row g.stack rect").style("fill",function(){const it=this.parentNode.parentNode.__data__,id=it.d.UNITID; return pins.has(id)?rkPinCol(id):on(id)?"var(--dot)":any?"var(--gry)":null}).style("fill-opacity",function(o){const id=this.parentNode.parentNode.__data__.d.UNITID; return on(id)&&R.fig.indexOf(o.c)%2?.6:null});
-  svg.selectAll("rect.band").attr("fill",o=>on(o.id)?"var(--soft)":"transparent").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):"none").attr("stroke-width",o=>pins.has(o.id)?1.8:1);
-  svg.selectAll("rect.hit").attr("fill",it=>on(it.d.UNITID)?"var(--soft)":"transparent").attr("stroke",it=>pins.has(it.d.UNITID)?rkPinCol(it.d.UNITID):"none").attr("stroke-width",it=>pins.has(it.d.UNITID)?1.8:1).style("cursor","pointer");
+  svg.selectAll("rect.band").attr("fill",o=>on(o.id)?"var(--soft)":"transparent").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):o.id===h?hc:"none").attr("stroke-width",o=>pins.has(o.id)?1.8:1);
+  svg.selectAll("rect.hit").attr("fill",it=>on(it.d.UNITID)?"var(--soft)":"transparent").attr("stroke",it=>pins.has(it.d.UNITID)?rkPinCol(it.d.UNITID):it.d.UNITID===h?hc:"none").attr("stroke-width",it=>pins.has(it.d.UNITID)?1.8:1).style("cursor","pointer");
   /* pinned schools: bigger and bold rank, name, glyph, score bar and score in the left part of the row */
   const LN=rkLayout(),isP=it=>pins.has(it.d.UNITID);
   svg.selectAll("g.row text.nmx").style("font-weight",it=>isP(it)?700:400).style("font-size",it=>isP(it)?"14px":"12.5px").text(it=>{const m=Math.floor(LN.nameW/(isP(it)?7.6:6.6)); return it.d.INSTNM.length>m?it.d.INSTNM.slice(0,m-1)+"…":it.d.INSTNM});
-  svg.selectAll("g.row text.rk, g.row text.sc").style("font-size",it=>isP(it)?"14px":"12px").style("font-weight",it=>isP(it)?700:400).style("fill",it=>isP(it)?"var(--fg)":"var(--muted)");
+  svg.selectAll("g.row text.rk").style("font-size",it=>isP(it)?"14px":"12px").style("font-weight",it=>isP(it)?700:400).style("fill",it=>isP(it)?"var(--fg)":"var(--muted)");
   svg.selectAll("g.row path.tdot").attr("d",it=>d3.symbol().size(isP(it)?115:75).type(RK_SHAPE[it.d.Control]||d3.symbolCircle)());
-  svg.selectAll("g.row g.stack rect").attr("y",function(){return isP(this.parentNode.parentNode.__data__)?4:7}).attr("height",function(){return isP(this.parentNode.parentNode.__data__)?RK_RH-8:RK_RH-14});
-  svg.selectAll("g.row").style("opacity",it=>any&&!on(it.d.UNITID)?.65:1);
+  svg.selectAll("g.row").style("opacity",it=>any&&!on(it.d.UNITID)?.9:1);
   const LT=rkLayout(); /* school name after the last column, on up to two lines, for pinned and hovered schools */
   svg.selectAll("text.tag").each(function(){ const o=this.parentNode.__data__,t=d3.select(this); t.selectAll("tspan").remove(); if(o.j!==R.fig.length-1||!on(o.id))return;
     const ls=rkLines(o.it.d.INSTNM,RK_LBLCH).filter(Boolean); t.attr("y",ls.length>1?14:19).style("font-weight",pins.has(o.id)?700:400); ls.forEach((s,i)=>{ const ts=t.append("tspan").attr("x",LT.tw+10).attr("dy",i?"12px":0); if(!i&&pins.has(o.id))ts.append("tspan").style("fill",rkPinCol(o.id)).text("■ "); ts.append("tspan").text(s); }); });
@@ -609,9 +605,9 @@ function rkHistMark(){
   const R=S.rank,L=rkLayout(),pinIts=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(Boolean),hovIt=R.hov!=null?R.items.find(it=>it.d.UNITID===R.hov):null,B=14;
   d3.selectAll("#rkHead g.hc").each(function(c){ const j=R.fig.indexOf(c); if(j<0)return; const gh=d3.select(this),s=rkStat(c.k),x0=L.x0(j),span=(s.hi-s.lo)||1,bi=v=>Math.min(B-1,Math.floor((v-s.lo)/span*B));
     const mk=new Set(pinIts.map(it=>bi(it.d[c.k]))),hb=hovIt?bi(hovIt.d[c.k]):-1,any=mk.size>0||hb>=0;
-    gh.selectAll("g.hbars rect").attr("fill-opacity",(d,i)=>any?(mk.has(i)||i===hb?1:.3):.85).attr("stroke",(d,i)=>mk.has(i)||i===hb?"var(--fg)":"none").attr("stroke-width",1.2);
+    gh.selectAll("g.hbars rect").attr("fill-opacity",(d,i)=>any?(mk.has(i)||i===hb?1:.4):.6).attr("stroke",(d,i)=>mk.has(i)||i===hb?"var(--fg)":"none").attr("stroke-width",1.2);
     const mg=gh.select("g.hmark"); mg.selectAll("*").remove();
-    const ticks=pinIts.map(it=>({x:x0+(it.d[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hovIt?[{x:x0+(hovIt.d[c.k]-s.lo)/span*L.tw,col:"var(--median)"}]:[]);
+    const ticks=pinIts.map(it=>({x:x0+(it.d[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hovIt?[{x:x0+(hovIt.d[c.k]-s.lo)/span*L.tw,col:rkNextCol()}]:[]);
     for(const k of ticks){ mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke","var(--panel)").attr("stroke-width",4.5); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",RK_HY0+1).attr("r",3.6).attr("fill",k.col).attr("stroke","var(--panel)").attr("stroke-width",1.2); }
   });
 }
@@ -688,7 +684,7 @@ function rkSetup(){
   rkFillRegion(); rkFillState();
   $("rkRegion").addEventListener("change",e=>{const R=S.rank; R.region=e.target.value; if(R.state&&R.region&&RK_STREG.get(R.state)!==R.region)R.state=""; rkFillState(); rkUpdate(false,{track:false})});
   $("rkState").addEventListener("change",e=>{S.rank.state=e.target.value; rkUpdate(false,{track:false})});
-  $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; S.rank.slot=new Map(); renderRankBody(); rkLinked(true)});
+  $("rkPinClear").addEventListener("click",()=>{S.rank.pins=[]; S.rank.slot=new Map(); S.rank.startPins=false; renderRankBody(); rkLinked(true)});
   $("rkGeoClear").addEventListener("click",()=>{S.rank.geoBox=null; rkMapClearBrush(); rkUpdate(false,{track:false})});
   $("rkAdd").addEventListener("change",e=>rkAdd(e.target.value));
   $("rkFAdd").addEventListener("change",e=>{ const k=e.target.value; if(!k)return; const s=rkStat(k); S.rank.ranges[k]=[s.lo,s.hi]; rkUpdate(true,{track:false}); });
@@ -697,7 +693,9 @@ function rkSetup(){
   $("rkQ").addEventListener("input",e=>{S.rank.q=e.target.value; later(()=>rkUpdate(false,{track:false}))});
   rkFillAdd(); rkFillFilterAdd();
 }
-function renderRank(){ rkCompute(false); rkSyncControls(); rkFillAdd(); rkWeightsUI(); rkFiltersUI(); renderRankHeader(); renderRankBody(); rkCount(); rkLinked(false); refreshInfo(); }
+let rkFirst=true;
+function renderRank(){ rkCompute(false);
+  if(rkFirst){ rkFirst=false; const R=S.rank; R.items.slice(0,3).forEach((it,i)=>{R.pins.push(it.d.UNITID); R.slot.set(it.d.UNITID,i)}); R.startPins=true; } /* first view: the top 3 are pinned so the design is visible; any pin change clears this note */ rkSyncControls(); rkFillAdd(); rkWeightsUI(); rkFiltersUI(); renderRankHeader(); renderRankBody(); rkCount(); rkLinked(false); refreshInfo(); }
 rkSetup();
 
 
