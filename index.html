@@ -620,7 +620,7 @@ function rkHistMark(){
     const ticks=pv.map(it=>({x:x0+(it.v[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID),rank:it.rank})).concat(hv?[{x:x0+(hv.v[c.k]-s.lo)/span*L.tw,col:rkNextCol(),rank:hv.rank}]:[]);
     const rl=[...new Set(ticks.map(k=>k.rank))].sort(d3.ascending), yTop=RK_HY0-2, yLow=RK_HY1-16;
     const yOf=r=>rl.length>1?yTop+rl.indexOf(r)/(rl.length-1)*(yLow-yTop):yTop;
-    ticks.sort((a,b)=>b.rank-a.rank); /* draw the best-ranked last, so it lies on top */
+    ticks.sort((a,b)=>a.rank-b.rank); /* draw the best-ranked (highest) first and the lowest last, so the lowest lollipop is in front */
     for(const k of ticks){ const y=yOf(k.rank); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",y).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",y).attr("r",4.4).attr("fill",k.col); }
   });
 }
