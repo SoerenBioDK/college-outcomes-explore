@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>College Outcomes Explorer</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
@@ -13,14 +14,8 @@
 :root{
   --bg:#f6f7f8; --panel:#ffffff; --fg:#1f2428; --muted:#5d666e; --line:#d9dde1; --soft:#eef0f2;
   --up:#2166ac; --dn:#b2182b; --accent:#3182bd; --sgrey:#f0f0f0; --gry:#bdbdbd; --gry2:#737373; --median:#252525; --dot:#252525; --pin0:#1b9e77; --pin1:#d95f02; --pin2:#7570b3; --pin3:#e7298a; --pin4:#66a61e; --pin5:#e6ab02; --pin6:#a6761d; --pin7:#666666; /* pinned schools: ColorBrewer Dark2 */
-  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light; --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#bdbdbd; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#14181b; --panel:#1c2125; --fg:#e8ebed; --muted:#9aa4ab; --line:#333b41; --soft:#262d32;
-  --up:#4393c3; --dn:#d6604d; --accent:#6baed6; --sgrey:#252525; --gry:#636363; --gry2:#bdbdbd; --median:#f0f0f0; --dot:#d9d9d9; --pin0:#66c2a5; --pin1:#fc8d62; --pin2:#8da0cb; --pin3:#e78ac3; --pin4:#a6d854; --pin5:#ffd92f; --pin6:#e5c494; --pin7:#b3b3b3; /* dark mode: ColorBrewer Set2 */ color-scheme:dark}
 
 /* ---------- page ---------- */
 *{box-sizing:border-box}
@@ -509,7 +504,7 @@ function renderRankHeader(){
     h.select("g.dirb").attr("transform",`translate(${x0},49)`).attr("aria-label",`${a.short}: ${c.dir>0?"highest":"lowest"} is best. Press to flip.`).select("text").text(c.dir>0?TEXT.figure.highBest:TEXT.figure.lowBest);
     h.select("g.dirb").on("click",()=>{c.dir=-c.dir;rkUpdate(true,{animate:true})}).on("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();c.dir=-c.dir;rkUpdate(true,{animate:true})}});
     const bins=rkHistReal(c.k,14),mx=d3.max(bins)||1,bwid=tw/bins.length;
-    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)).attr("fill","var(--gry2)").attr("fill-opacity",.6);
+    h.select("g.hbars").selectAll("rect").data(bins).join("rect").attr("x",(d,i)=>x0+i*bwid).attr("width",Math.max(.5,bwid-1)).attr("y",d=>RK_HY1-(d/mx)*(RK_HY1-RK_HY0)*.72).attr("height",d=>(d/mx)*(RK_HY1-RK_HY0)*.72).attr("fill","var(--gry2)").attr("fill-opacity",.6);
     h.select("text.lo").attr("x",x0).attr("y",RK_HH-6).text(rkCompact(c.k,s.lo)); h.select("text.hi").attr("x",x0+tw).attr("y",RK_HH-6).text(rkCompact(c.k,s.hi));
     h.select("title").text(TEXT.figure.histTip(a.long));
     const sx=d3.scaleLinear([s.lo,s.hi],[x0,x0+tw]),br=d3.brushX().extent([[x0,RK_HY0-2],[x0+tw,RK_HY1]]).on("brush end",e=>{ if(!e.sourceEvent)return; if(!e.selection)delete R.ranges[c.k]; else R.ranges[c.k]=e.selection.map(sx.invert).sort(d3.ascending); rkUpdate(false,{track:false}); });
@@ -619,10 +614,14 @@ function rkHistMark(){
   const R=S.rank,L=rkLayout(),pinIts=R.pins.map(id=>R.items.find(it=>it.d.UNITID===id)).filter(Boolean),hovIt=R.hov!=null?R.items.find(it=>it.d.UNITID===R.hov):null,B=14;
   d3.selectAll("#rkHead g.hc").each(function(c){ const j=R.fig.indexOf(c); if(j<0)return; const gh=d3.select(this),s=rkStat(c.k),x0=L.x0(j),span=(s.hi-s.lo)||1,bi=v=>Math.min(B-1,Math.floor((v-s.lo)/span*B));
     const pv=pinIts.filter(it=>it.v[c.k]!=null),hv=hovIt&&hovIt.v[c.k]!=null?hovIt:null,mk=new Set(pv.map(it=>bi(it.v[c.k]))),hb=hv?bi(hv.v[c.k]):-1,any=mk.size>0||hb>=0;
-    gh.selectAll("g.hbars rect").attr("fill-opacity",(d,i)=>any?(mk.has(i)||i===hb?1:.4):.6).attr("stroke",(d,i)=>mk.has(i)||i===hb?"var(--fg)":"none").attr("stroke-width",1.2);
+    gh.selectAll("g.hbars rect").attr("fill-opacity",.6).attr("stroke","none");
     const mg=gh.select("g.hmark"); mg.selectAll("*").remove();
-    const ticks=pv.map(it=>({x:x0+(it.v[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID)})).concat(hv?[{x:x0+(hv.v[c.k]-s.lo)/span*L.tw,col:rkNextCol()}]:[]);
-    for(const k of ticks){ mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke","var(--panel)").attr("stroke-width",4.5); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",RK_HY0+1).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",RK_HY0+1).attr("r",3.6).attr("fill",k.col).attr("stroke","var(--panel)").attr("stroke-width",1.2); }
+    /* lollipops: one per pinned (and hovered) school; the better the overall rank, the higher the head. Same rank = same height. */
+    const ticks=pv.map(it=>({x:x0+(it.v[c.k]-s.lo)/span*L.tw,col:rkPinCol(it.d.UNITID),rank:it.rank})).concat(hv?[{x:x0+(hv.v[c.k]-s.lo)/span*L.tw,col:rkNextCol(),rank:hv.rank}]:[]);
+    const rl=[...new Set(ticks.map(k=>k.rank))].sort(d3.ascending), yTop=RK_HY0-2, yLow=RK_HY1-16;
+    const yOf=r=>rl.length>1?yTop+rl.indexOf(r)/(rl.length-1)*(yLow-yTop):yTop;
+    ticks.sort((a,b)=>b.rank-a.rank); /* draw the best-ranked last, so it lies on top */
+    for(const k of ticks){ const y=yOf(k.rank); mg.append("line").attr("x1",k.x).attr("x2",k.x).attr("y1",y).attr("y2",RK_HY1).attr("stroke",k.col).attr("stroke-width",2.2); mg.append("circle").attr("cx",k.x).attr("cy",y).attr("r",4.4).attr("fill",k.col); }
   });
 }
 function rkHover(id){ const R=S.rank; if(R.hov===id)return; R.hov=id; rkMapRings(); rkFigStyle(); }
