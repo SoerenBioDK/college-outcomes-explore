@@ -128,6 +128,7 @@ svg text{fill:var(--fg)}
 
     <section class="panel crit" aria-label="Filters">
       <h3 id="tR" data-text="filters.title"></h3><p class="cnt" id="sR"></p>
+      <div class="field"><label for="rkGroup" data-text="filters.group"></label><select id="rkGroup"></select></div>
       <div class="field"><label for="rkField" data-text="filters.field"></label><select id="rkField"></select></div>
       <div class="fpair">
         <div class="field"><label for="rkType" data-text="filters.type"></label><select id="rkType"></select></div>
@@ -199,7 +200,10 @@ const TEXT = {
     count: n => `${n.toLocaleString("en-US")} schools`,                 // bold number under the title
     countTip: (n, all, vars) => `${n.toLocaleString("en-US")} of ${all.toLocaleString("en-US")} schools pass your filters and have values for the ${vars} chosen variables, with at most one missing. A missing value is replaced by the median of the school type and drawn dashed. Ranks are counted among these schools.`,
     field: "Field of study",
+    group: "Field group",
+    groupAny: "Any group",
     fieldAny: "Any field",
+    fieldAll: "All fields in this group",
     fieldOther: "Other",
     hardTitle: "Filters",                                           // heading above the list of filters
     addFilter: "+ Add a filter",
@@ -409,7 +413,7 @@ const fm=v=>"$"+d3.format(",")(Math.round(v));
 const ROWBYID=new Map(rows.map(d=>[d.UNITID,d])), PROGBYFIELD=d3.group([...PROG.values()].flat().filter(g=>g.e5!=null&&g.db!=null&&ROWBYID.has(g.u)),g=>g.c);
 const GROUPS=FIELD_GROUPS; // defined in js/variables.js
 const G2=new Map(GROUPS.flatMap(([g,cs])=>cs.map(c=>[c,g]))), grpOf=c=>G2.get(c.slice(0,2))||GROUPS[GROUPS.length-1][0], PROGALL=[...PROGBYFIELD.values()].flat();
-const FIELDOPTS=[...PROGBYFIELD].filter(([c,a])=>a.length>=30).map(([c,a])=>({c,label:`${CIPN.get(c)||c} (${a.length} schools)`,grp:grpOf(c)}));
+const FIELDOPTS=[...PROGBYFIELD].map(([c,a])=>({c,label:`${CIPN.get(c)||c} (${a.length} schools)`,grp:grpOf(c)}));
 const baseCache=new Map(), progMode=f=>!!(f.field||f.group);
 function findBase(field,group){
   const key=field?"f:"+field:group?"g:"+group:"";
@@ -594,7 +598,7 @@ function renderRankBody(){
 }
 function rkFigStyle(){
   const R=S.rank,svg=d3.select("#rkSvg"),pins=new Set(R.pins),any=R.pins.some(id=>svg.selectAll("g.row").filter(it=>it.d.UNITID===id).size()>0),h=R.hov,hc=rkNextCol(),hp=h!=null&&pins.has(h),on=id=>pins.has(id)||id===h;
-  svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):0).filter(o=>on(o.id)).raise();
+  svg.selectAll("path.ln").attr("stroke",o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--muted)").attr("stroke-width",o=>o.id===h?3.6:pins.has(o.id)?2.2:1).attr("stroke-opacity",o=>on(o.id)?(hp&&o.id!==h?.3:1):.35).filter(o=>on(o.id)).raise();
   svg.selectAll("g.cell").style("opacity",o=>any&&!on(o.id)?.85:1);
   const isEst=o=>o.it.est.has(R.fig[o.j].k),barCol=o=>pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:"var(--gry2)";
   svg.selectAll("g.cell rect.bar").style("fill",o=>isEst(o)?"none":pins.has(o.id)?rkPinCol(o.id):on(o.id)?hc:any?"var(--gry2)":null).style("stroke",o=>isEst(o)?barCol(o):null).style("stroke-width",o=>isEst(o)?1.4:null).style("stroke-dasharray",o=>isEst(o)?"3 2":null);
@@ -661,11 +665,13 @@ function rkMapUpdate(){
   $("rkMapNote").textContent=R.geoBox?TEXT.map.boxNote(R.items.length,pop.length):TEXT.map.hint;
   $("rkGeoClear").style.display=R.geoBox?null:"none"; rkMapRings();
 }
-function rkFillField(){ const R=S.rank,s=$("rkField"); s.innerHTML=""; const add=(k,l,bold,dis)=>{const e=document.createElement("option");e.value=k;e.textContent=l;if(bold)e.style.fontWeight=700;if(dis)e.disabled=true;s.appendChild(e)}; add("",TEXT.filters.fieldAny);
-  /* a broad field is one bold entry you can click (value "G:name"); its single fields follow, indented */
-  const done=new Set(); GROUPS.forEach(([g])=>{ const fs=FIELDOPTS.filter(o=>o.grp===g); if(!fs.length)return; done.add(g); add("G:"+g,g,true); fs.sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,"\u2003"+o.label)); });
-  const rest=FIELDOPTS.filter(o=>!done.has(o.grp)); if(rest.length){ add("",TEXT.filters.fieldOther,true,true); rest.sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(o.c,"\u2003"+o.label)); }
-  s.value=R.field?R.field:R.group?"G:"+R.group:""; }
+function rkFillField(){ const R=S.rank,g=$("rkGroup"),s=$("rkField");
+  const add=(sel,k,l)=>{const e=document.createElement("option");e.value=k;e.textContent=l;sel.appendChild(e)};
+  /* menu 1: the broad field groups (our own grouping of the two-digit CIP codes) */
+  g.innerHTML=""; add(g,"",TEXT.filters.groupAny); GROUPS.forEach(([n])=>{ if(FIELDOPTS.some(o=>o.grp===n)) add(g,n,n); }); g.value=R.group||"";
+  /* menu 2: the single fields (four-digit CIP codes); only those of the chosen group, or all fields when no group is chosen */
+  s.innerHTML=""; add(s,"",R.group?TEXT.filters.fieldAll:TEXT.filters.fieldAny);
+  FIELDOPTS.filter(o=>!R.group||o.grp===R.group).sort((a,b)=>a.label.localeCompare(b.label)).forEach(o=>add(s,o.c,o.label)); s.value=R.field||""; }
 /* ---- filters: any variable, with a lowest and a highest allowed value (stored in S.rank.ranges, the same place the histogram brush writes to) ---- */
 let rkFSig="";
 function rkFiltersUI(){ const R=S.rank,host=$("rkFilters"),keys=Object.keys(R.ranges),sig=keys.join("|");
@@ -682,7 +688,7 @@ function rkFiltersUI(){ const R=S.rank,host=$("rkFilters"),keys=Object.keys(R.ra
 function rkFillFilterAdd(){ const s=$("rkFAdd"); s.innerHTML=""; const o0=document.createElement("option"); o0.value=""; o0.textContent=TEXT.filters.addFilter; s.appendChild(o0);
   VARIABLES.filter(a=>!(a[0] in S.rank.ranges)).forEach(a=>{const o=document.createElement("option");o.value=a[0];o.textContent=a[1];s.appendChild(o)}); s.value=""; s.style.display=Object.keys(S.rank.ranges).length>=VARIABLES.length?"none":""; }
 function rkSyncControls(){ const R=S.rank;
-  $("rkField").value=R.field?R.field:R.group?"G:"+R.group:""; $("rkType").value=R.type; $("rkRegion").value=R.region; rkFillState(); $("rkPinClear").style.display=R.pins.length?null:"none"; }
+  rkFillField(); $("rkType").value=R.type; $("rkRegion").value=R.region; rkFillState(); $("rkPinClear").style.display=R.pins.length?null:"none"; }
 function rkAreaFeatures(){ const R=S.rank; if(!R.region&&!R.state)return states; const f=states.features.filter(g=>R.state?fipsToAbbr.get(+g.id)===R.state:regionOf(g)===R.region); return f.length?{type:"FeatureCollection",features:f}:states; }
 const RK_STREG=new Map(rows.map(d=>[d.STABBR,d.Region]));
 function rkFillRegion(){ const s=$("rkRegion"); s.innerHTML=""; const add=(v,l)=>{const e=document.createElement("option");e.value=v;e.textContent=l;s.appendChild(e)}; add("",TEXT.map.regionAll); REGIONS.forEach(r=>add(r,r)); s.value=S.rank.region; }
@@ -690,7 +696,8 @@ function rkFillState(){ const R=S.rank,s=$("rkState"); s.innerHTML=""; const add
   [...new Set(rows.filter(d=>!R.region||d.Region===R.region).map(d=>d.STABBR))].sort((a,b)=>(RK_STN[a]||a).localeCompare(RK_STN[b]||b)).forEach(a=>add(a,RK_STN[a]||a)); s.value=R.state; }
 function rkSetup(){
   fillSelect("rkType",[["All",TEXT.filters.typeAll],["Public","Public"],["Private nonprofit","Private nonprofit"],["Private for-profit","Private for-profit"]],"All",v=>{S.rank.type=v; rkUpdate(false,{track:false})});
-  rkFillField(); $("rkField").addEventListener("change",e=>{const R=S.rank,v=e.target.value; R.field=""; R.group=""; if(v.startsWith("G:"))R.group=v.slice(2); else R.field=v; rkApplyField(); rkUpdate(true,{track:false}); rkSyncControls();});
+  rkFillField(); $("rkGroup").addEventListener("change",e=>{const R=S.rank; R.group=e.target.value; R.field=""; rkApplyField(); rkFillField(); rkUpdate(true,{track:false}); rkSyncControls();});
+  $("rkField").addEventListener("change",e=>{const R=S.rank,v=e.target.value; R.field=v; if(v)R.group=FIELDOPTS.find(o=>o.c===v).grp; rkApplyField(); rkFillField(); rkUpdate(true,{track:false}); rkSyncControls();});
   rkFillRegion(); rkFillState();
   $("rkRegion").addEventListener("change",e=>{const R=S.rank; R.region=e.target.value; if(R.state&&R.region&&RK_STREG.get(R.state)!==R.region)R.state=""; rkFillState(); rkUpdate(false,{track:false})});
   $("rkState").addEventListener("change",e=>{S.rank.state=e.target.value; rkUpdate(false,{track:false})});
